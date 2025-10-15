@@ -60,13 +60,17 @@ export const RemedyCard = forwardRef<HTMLDivElement, RemedyCardProps>(({
       transition={{ duration: 0.5, delay: index * 0.1 }}
       whileHover={{ y: -5 }}
     >
-      <Card className="overflow-hidden shadow-[var(--shadow-card)] hover:shadow-[var(--shadow-elegant)] transition-all duration-300 bg-gradient-to-br from-card to-card/50 border-border/50">
-        <div className="p-6">
+      <Card className="group overflow-hidden shadow-[var(--shadow-card)] hover:shadow-[var(--shadow-glow)] transition-all duration-500 bg-gradient-to-br from-card via-card to-muted/20 border-border/50 hover:border-primary/30 relative before:absolute before:inset-0 before:bg-gradient-to-br before:from-primary/5 before:to-transparent before:opacity-0 hover:before:opacity-100 before:transition-opacity before:duration-500">
+        <div className="p-6 relative z-10">
           {/* Header */}
           <div className="flex items-start gap-3 mb-4">
-            <div className="p-2 bg-primary/10 rounded-lg">
+            <motion.div 
+              className="p-2 bg-primary/10 rounded-lg"
+              whileHover={{ rotate: [0, -10, 10, -10, 0], scale: 1.1 }}
+              transition={{ duration: 0.5 }}
+            >
               <Leaf className="text-primary" size={24} />
-            </div>
+            </motion.div>
             <div className="flex-1">
               <h3 className="text-lg font-semibold font-poppins text-foreground mb-1">
                 {name}
@@ -106,11 +110,31 @@ export const RemedyCard = forwardRef<HTMLDivElement, RemedyCardProps>(({
           </div>
 
           {/* Remedy Preview */}
-          <div className="mb-4">
+          <motion.div 
+            className="mb-4"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.2 }}
+          >
             <p className="text-sm text-muted-foreground font-inter line-clamp-2">
               {remedy}
             </p>
-          </div>
+          </motion.div>
+
+          {/* Yogasan Badge */}
+          {yogasan && (
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.3 }}
+              className="mb-4"
+            >
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-primary/10 to-secondary/10 rounded-full">
+                <span className="text-xs font-semibold text-primary">🧘</span>
+                <span className="text-xs font-medium text-foreground">Yoga Pose Available</span>
+              </div>
+            </motion.div>
+          )}
 
           {/* Expand Button */}
           <Button
@@ -152,30 +176,58 @@ export const RemedyCard = forwardRef<HTMLDivElement, RemedyCardProps>(({
             </div>
 
             {yogasan && (
-              <div className="pt-2">
-                <h4 className="text-sm font-semibold text-foreground mb-3 font-poppins">
-                  Recommended Yoga Pose:
-                </h4>
-                <div className="relative rounded-lg overflow-hidden bg-muted/30">
-                  <img 
-                    src={yogasan} 
-                    alt="Yoga pose" 
-                    className="w-full h-48 object-cover"
-                    onError={(e) => {
-                      e.currentTarget.style.display = 'none';
-                      e.currentTarget.parentElement!.innerHTML = '<div class="flex items-center justify-center h-48 text-muted-foreground text-sm">Yoga pose image not available</div>';
-                    }}
-                  />
-                  <a
-                    href={yogasan}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="absolute top-2 right-2 p-2 bg-card/90 hover:bg-card rounded-lg shadow-md transition-colors"
+              <motion.div 
+                className="pt-2"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2 }}
+              >
+                <div className="flex items-center gap-2 mb-3">
+                  <motion.span
+                    animate={{ rotate: [0, 10, -10, 0] }}
+                    transition={{ duration: 2, repeat: Infinity, repeatDelay: 3 }}
+                    className="text-2xl"
                   >
-                    <ExternalLink size={16} className="text-primary" />
-                  </a>
+                    🧘‍♀️
+                  </motion.span>
+                  <h4 className="text-sm font-semibold text-foreground font-poppins">
+                    Recommended Yoga Pose
+                  </h4>
                 </div>
-              </div>
+                <motion.div 
+                  className="relative rounded-xl overflow-hidden bg-gradient-to-br from-primary/5 to-secondary/5 border-2 border-primary/20"
+                  whileHover={{ scale: 1.02 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <div className="relative group/img">
+                    <img 
+                      src={yogasan} 
+                      alt="Yoga pose" 
+                      className="w-full h-56 object-cover transition-transform duration-500 group-hover/img:scale-110"
+                      onError={(e) => {
+                        e.currentTarget.style.display = 'none';
+                        e.currentTarget.parentElement!.innerHTML = '<div class="flex flex-col items-center justify-center h-56 text-muted-foreground"><span class="text-4xl mb-2">🧘</span><span class="text-sm">Yoga pose reference</span></div>';
+                      }}
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover/img:opacity-100 transition-opacity duration-300" />
+                    <motion.a
+                      href={yogasan}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="absolute top-3 right-3 p-2.5 bg-card/95 hover:bg-card rounded-lg shadow-lg transition-all backdrop-blur-sm"
+                      whileHover={{ scale: 1.1 }}
+                      whileTap={{ scale: 0.9 }}
+                    >
+                      <ExternalLink size={16} className="text-primary" />
+                    </motion.a>
+                  </div>
+                  <div className="p-3 bg-card/50 backdrop-blur-sm">
+                    <p className="text-xs text-muted-foreground font-inter text-center">
+                      Practice this yoga pose for enhanced healing benefits
+                    </p>
+                  </div>
+                </motion.div>
+              </motion.div>
             )}
           </div>
         </motion.div>
