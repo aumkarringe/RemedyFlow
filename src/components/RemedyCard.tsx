@@ -1,8 +1,9 @@
 import { motion } from "framer-motion";
-import { ChevronDown, Leaf, ExternalLink } from "lucide-react";
-import { useState } from "react";
+import { ChevronDown, Leaf, ExternalLink, Heart, Share2, Printer, Copy } from "lucide-react";
+import { useState, forwardRef } from "react";
 import { Card } from "./ui/card";
 import { Button } from "./ui/button";
+import { useToast } from "@/hooks/use-toast";
 
 interface RemedyCardProps {
   name: string;
@@ -12,17 +13,47 @@ interface RemedyCardProps {
   index: number;
 }
 
-export const RemedyCard = ({ 
+export const RemedyCard = forwardRef<HTMLDivElement, RemedyCardProps>(({ 
   name, 
   healthIssue, 
   remedy, 
   yogasan, 
   index 
-}: RemedyCardProps) => {
+}, ref) => {
   const [isExpanded, setIsExpanded] = useState(false);
+  const [isFavorite, setIsFavorite] = useState(false);
+  const { toast } = useToast();
+
+  const handleCopy = () => {
+    const text = `${name}\nHealth Issue: ${healthIssue}\nRemedy: ${remedy}${yogasan ? `\nYoga: ${yogasan}` : ''}`;
+    navigator.clipboard.writeText(text);
+    toast({ title: "Copied to clipboard!" });
+  };
+
+  const handleShare = async () => {
+    if (navigator.share) {
+      await navigator.share({
+        title: name,
+        text: `${healthIssue}: ${remedy}`,
+      });
+    } else {
+      handleCopy();
+    }
+  };
+
+  const handlePrint = () => {
+    const printWindow = window.open('', '_blank');
+    printWindow?.document.write(`
+      <html><head><title>${name}</title></head>
+      <body><h1>${name}</h1><h3>${healthIssue}</h3><p>${remedy}</p></body>
+      </html>
+    `);
+    printWindow?.print();
+  };
 
   return (
     <motion.div
+      ref={ref}
       initial={{ opacity: 0, y: 30 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "-50px" }}
@@ -45,6 +76,33 @@ export const RemedyCard = ({
                 {healthIssue}
               </div>
             </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setIsFavorite(!isFavorite)}
+              className="hover:bg-primary/10"
+            >
+              <Heart
+                size={20}
+                className={`${isFavorite ? 'fill-red-500 text-red-500' : 'text-muted-foreground'} transition-colors`}
+              />
+            </Button>
+          </div>
+
+          {/* Quick Actions */}
+          <div className="flex gap-2 mb-4">
+            <Button variant="outline" size="sm" onClick={handleShare} className="flex-1">
+              <Share2 size={14} className="mr-1" />
+              Share
+            </Button>
+            <Button variant="outline" size="sm" onClick={handleCopy} className="flex-1">
+              <Copy size={14} className="mr-1" />
+              Copy
+            </Button>
+            <Button variant="outline" size="sm" onClick={handlePrint} className="flex-1">
+              <Printer size={14} className="mr-1" />
+              Print
+            </Button>
           </div>
 
           {/* Remedy Preview */}
@@ -124,4 +182,6 @@ export const RemedyCard = ({
       </Card>
     </motion.div>
   );
-};
+});
+
+RemedyCard.displayName = "RemedyCard";

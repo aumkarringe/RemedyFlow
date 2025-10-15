@@ -10,8 +10,10 @@ import { Remedy } from "@/types/remedy";
 
 const Index = () => {
   const [searchQuery, setSearchQuery] = useState("");
+  const [submittedQuery, setSubmittedQuery] = useState("");
   const [view, setView] = useState<"grid" | "list">("grid");
   const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState<string>("");
 
   // Initialize Fuse.js for fuzzy search
   const fuse = useMemo(
@@ -40,16 +42,32 @@ const Index = () => {
     return Array.from(issues).sort();
   }, []);
 
-  // Filter results based on search query
+  // Get all unique categories
+  const categories = useMemo(() => {
+    const cats = new Set<string>();
+    remediesData.forEach((remedy: Remedy) => {
+      if (remedy["Health Issue"]) {
+        cats.add(remedy["Health Issue"]);
+      }
+    });
+    return Array.from(cats).sort().slice(0, 8);
+  }, []);
+
+  // Filter results based on submitted search query
   const filteredRemedies = useMemo(() => {
-    if (!searchQuery.trim()) {
-      // Show a sample of remedies when no search query
-      return (remediesData as Remedy[]).slice(0, 12);
+    if (!submittedQuery.trim()) {
+      return [];
     }
 
-    const results = fuse.search(searchQuery);
-    return results.map((result) => result.item);
-  }, [searchQuery, fuse]);
+    let results = fuse.search(submittedQuery).map((result) => result.item);
+    
+    // Apply category filter
+    if (selectedCategory) {
+      results = results.filter(r => r["Health Issue"] === selectedCategory);
+    }
+
+    return results;
+  }, [submittedQuery, fuse, selectedCategory]);
 
   // Update suggestions based on search query
   useEffect(() => {
@@ -74,11 +92,21 @@ const Index = () => {
 
   const handleClearSearch = () => {
     setSearchQuery("");
+    setSubmittedQuery("");
     setSuggestions([]);
+    setSelectedCategory("");
+  };
+
+  const handleSearch = () => {
+    if (searchQuery.trim()) {
+      setSubmittedQuery(searchQuery);
+      setSuggestions([]);
+    }
   };
 
   const handleSuggestionClick = (suggestion: string) => {
     setSearchQuery(suggestion);
+    setSubmittedQuery(suggestion);
     setSuggestions([]);
   };
 
@@ -91,9 +119,40 @@ const Index = () => {
           value={searchQuery}
           onChange={setSearchQuery}
           onClear={handleClearSearch}
+          onSearch={handleSearch}
           suggestions={suggestions}
           onSuggestionClick={handleSuggestionClick}
         />
+
+        {/* Category Quick Filters */}
+        {!submittedQuery && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+            className="mt-8 max-w-5xl mx-auto px-4"
+          >
+            <h3 className="text-center text-sm font-semibold text-muted-foreground mb-4 font-poppins">
+              Popular Health Issues
+            </h3>
+            <div className="flex flex-wrap justify-center gap-2">
+              {categories.map((cat) => (
+                <motion.button
+                  key={cat}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => {
+                    setSearchQuery(cat);
+                    setSubmittedQuery(cat);
+                  }}
+                  className="px-4 py-2 bg-primary/10 hover:bg-primary/20 text-primary rounded-full text-sm font-medium transition-colors"
+                >
+                  {cat}
+                </motion.button>
+              ))}
+            </div>
+          </motion.div>
+        )}
 
         {/* Results Section */}
         <div className="mt-16 max-w-7xl mx-auto px-4">
@@ -145,7 +204,7 @@ const Index = () => {
         </div>
 
         {/* Info Section */}
-        {!searchQuery && (
+        {!submittedQuery && (
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}

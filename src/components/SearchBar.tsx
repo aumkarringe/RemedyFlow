@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Search, X } from "lucide-react";
+import { Search, X, Sparkles } from "lucide-react";
 import { Input } from "./ui/input";
 import { Button } from "./ui/button";
 
@@ -7,6 +7,7 @@ interface SearchBarProps {
   value: string;
   onChange: (value: string) => void;
   onClear: () => void;
+  onSearch: () => void;
   suggestions?: string[];
   onSuggestionClick?: (suggestion: string) => void;
 }
@@ -14,10 +15,17 @@ interface SearchBarProps {
 export const SearchBar = ({ 
   value, 
   onChange, 
-  onClear, 
+  onClear,
+  onSearch,
   suggestions = [],
   onSuggestionClick 
 }: SearchBarProps) => {
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && value.trim()) {
+      onSearch();
+    }
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -26,25 +34,36 @@ export const SearchBar = ({
       className="w-full max-w-3xl mx-auto px-4 -mt-8 relative z-20"
     >
       <div className="relative">
-        <div className="relative flex items-center">
-          <Search className="absolute left-4 text-muted-foreground" size={20} />
-          <Input
-            type="text"
-            placeholder="Search for health issues, remedies, or ingredients..."
-            value={value}
-            onChange={(e) => onChange(e.target.value)}
-            className="pl-12 pr-12 py-6 text-lg font-inter bg-card shadow-[var(--shadow-elegant)] border-border/50 focus:border-primary transition-all rounded-xl"
-          />
-          {value && (
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={onClear}
-              className="absolute right-2 hover:bg-muted"
-            >
-              <X size={20} />
-            </Button>
-          )}
+        <div className="relative flex items-center gap-2">
+          <div className="relative flex-1">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" size={20} />
+            <Input
+              type="text"
+              placeholder="Search for health issues, remedies, or ingredients..."
+              value={value}
+              onChange={(e) => onChange(e.target.value)}
+              onKeyPress={handleKeyPress}
+              className="pl-12 pr-12 py-6 text-lg font-inter bg-card shadow-[var(--shadow-elegant)] border-border/50 focus:border-primary transition-all rounded-xl"
+            />
+            {value && (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={onClear}
+                className="absolute right-2 top-1/2 -translate-y-1/2 hover:bg-muted"
+              >
+                <X size={20} />
+              </Button>
+            )}
+          </div>
+          <Button
+            onClick={onSearch}
+            disabled={!value.trim()}
+            className="px-6 py-6 text-base font-semibold shadow-[var(--shadow-elegant)] hover:shadow-[var(--shadow-glow)] transition-all"
+          >
+            <Sparkles className="mr-2" size={20} />
+            Find Solution
+          </Button>
         </div>
 
         {/* Suggestions Dropdown */}
