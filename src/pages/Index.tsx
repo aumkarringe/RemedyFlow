@@ -6,6 +6,7 @@ import { SearchBar } from "@/components/SearchBar";
 import { RemedyCard } from "@/components/RemedyCard";
 import { ViewToggle } from "@/components/ViewToggle";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { AIAssistant } from "@/components/AIAssistant";
 import remediesData from "@/assets/remedies.json";
 import { Remedy } from "@/types/remedy";
 
@@ -114,6 +115,7 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-gradient-to-b from-background via-background to-muted/30 font-inter">
       <ThemeToggle />
+      <AIAssistant />
       <Hero />
 
       <div className="relative pb-12">
