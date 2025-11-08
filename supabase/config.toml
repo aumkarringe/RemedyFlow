@@ -2,3 +2,6 @@ project_id = "qmsquwgvnohdchlkzczq"
 
 [functions.ai-remedy-assistant]
 verify_jwt = false
+
+[functions.generate-remedies]
+verify_jwt = false

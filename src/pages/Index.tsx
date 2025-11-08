@@ -4,11 +4,15 @@ import Fuse from "fuse.js";
 import { Hero } from "@/components/Hero";
 import { SearchBar } from "@/components/SearchBar";
 import { RemedyCard } from "@/components/RemedyCard";
+import { AIRemedyCard } from "@/components/AIRemedyCard";
 import { ViewToggle } from "@/components/ViewToggle";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { AIAssistant } from "@/components/AIAssistant";
 import remediesData from "@/assets/remedies.json";
-import { Remedy } from "@/types/remedy";
+import { Remedy, AIRemedy, isAIRemedy } from "@/types/remedy";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+import { Loader2, Sparkles } from "lucide-react";
 
 const Index = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -16,6 +20,9 @@ const Index = () => {
   const [view, setView] = useState<"grid" | "list">("grid");
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>("");
+  const [aiRemedies, setAiRemedies] = useState<AIRemedy[]>([]);
+  const [isLoadingAI, setIsLoadingAI] = useState(false);
+  const { toast } = useToast();
 
   // Initialize Fuse.js for fuzzy search
   const fuse = useMemo(
@@ -55,8 +62,8 @@ const Index = () => {
     return Array.from(cats).sort().slice(0, 8);
   }, []);
 
-  // Filter results based on submitted search query
-  const filteredRemedies = useMemo(() => {
+  // Filter dataset results based on submitted search query
+  const datasetRemedies = useMemo(() => {
     if (!submittedQuery.trim()) {
       return [];
     }
@@ -70,6 +77,48 @@ const Index = () => {
 
     return results;
   }, [submittedQuery, fuse, selectedCategory]);
+
+  // Combine dataset and AI remedies
+  const allRemedies = useMemo(() => {
+    return [...datasetRemedies, ...aiRemedies];
+  }, [datasetRemedies, aiRemedies]);
+
+  // Generate AI remedies when search is submitted
+  const generateAIRemedies = async (query: string, datasetResults: Remedy[]) => {
+    setIsLoadingAI(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('generate-remedies', {
+        body: {
+          healthIssue: query,
+          datasetResults: datasetResults.map(r => ({
+            'Name of Item': r['Name of Item'],
+            'Health Issue': r['Health Issue']
+          }))
+        }
+      });
+
+      if (error) throw error;
+
+      if (data?.remedies && Array.isArray(data.remedies)) {
+        setAiRemedies(data.remedies);
+        if (data.remedies.length > 0) {
+          toast({
+            title: "✨ AI Remedies Generated",
+            description: `Found ${data.remedies.length} additional AI-powered remedies!`,
+          });
+        }
+      }
+    } catch (error) {
+      console.error('Error generating AI remedies:', error);
+      toast({
+        title: "AI Generation Error",
+        description: "Could not generate AI remedies. Showing dataset results only.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoadingAI(false);
+    }
+  };
 
   // Update suggestions based on search query
   useEffect(() => {
@@ -97,12 +146,20 @@ const Index = () => {
     setSubmittedQuery("");
     setSuggestions([]);
     setSelectedCategory("");
+    setAiRemedies([]);
   };
 
   const handleSearch = () => {
     if (searchQuery.trim()) {
       setSubmittedQuery(searchQuery);
       setSuggestions([]);
+      setAiRemedies([]); // Clear previous AI results
+      
+      // First get dataset results
+      const datasetResults = fuse.search(searchQuery).map((result) => result.item);
+      
+      // Then generate AI remedies
+      generateAIRemedies(searchQuery, datasetResults);
     }
   };
 
@@ -110,6 +167,13 @@ const Index = () => {
     setSearchQuery(suggestion);
     setSubmittedQuery(suggestion);
     setSuggestions([]);
+    setAiRemedies([]); // Clear previous AI results
+    
+    // Get dataset results
+    const datasetResults = fuse.search(suggestion).map((result) => result.item);
+    
+    // Generate AI remedies
+    generateAIRemedies(suggestion, datasetResults);
   };
 
   return (
@@ -148,6 +212,9 @@ const Index = () => {
                   onClick={() => {
                     setSearchQuery(cat);
                     setSubmittedQuery(cat);
+                    setAiRemedies([]);
+                    const datasetResults = fuse.search(cat).map((result) => result.item);
+                    generateAIRemedies(cat, datasetResults);
                   }}
                   className="px-4 py-2 bg-primary/10 hover:bg-primary/20 text-primary rounded-full text-sm font-medium transition-colors"
                 >
@@ -158,15 +225,51 @@ const Index = () => {
           </motion.div>
         )}
 
+        {/* AI Loading Indicator */}
+        {isLoadingAI && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mt-8 max-w-5xl mx-auto px-4"
+          >
+            <div className="flex items-center justify-center gap-3 p-4 bg-gradient-to-r from-primary/10 to-secondary/10 rounded-xl border border-primary/20">
+              <Loader2 className="w-5 h-5 animate-spin text-primary" />
+              <span className="text-sm font-medium text-foreground">
+                Generating AI-powered remedies...
+              </span>
+              <Sparkles className="w-5 h-5 text-secondary animate-pulse" />
+            </div>
+          </motion.div>
+        )}
+
         {/* Results Section */}
         <div className="mt-16 max-w-7xl mx-auto px-4">
-          {filteredRemedies.length > 0 ? (
+          {allRemedies.length > 0 ? (
             <>
               <ViewToggle
                 view={view}
                 onViewChange={setView}
-                resultCount={filteredRemedies.length}
+                resultCount={allRemedies.length}
               />
+
+              {/* Show count breakdown */}
+              {submittedQuery && (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="text-center mb-6"
+                >
+                  <p className="text-sm text-muted-foreground">
+                    {datasetRemedies.length > 0 && (
+                      <span className="font-medium text-foreground">{datasetRemedies.length} database remedies</span>
+                    )}
+                    {datasetRemedies.length > 0 && aiRemedies.length > 0 && <span> • </span>}
+                    {aiRemedies.length > 0 && (
+                      <span className="font-medium text-primary">{aiRemedies.length} AI-generated remedies</span>
+                    )}
+                  </p>
+                </motion.div>
+              )}
 
               <motion.div
                 layout
@@ -177,20 +280,32 @@ const Index = () => {
                 }`}
               >
                 <AnimatePresence mode="popLayout">
-                  {filteredRemedies.map((remedy, index) => (
-                    <RemedyCard
-                      key={`${remedy["Name of Item"]}-${index}`}
-                      name={remedy["Name of Item"]}
-                      healthIssue={remedy["Health Issue"]}
-                      remedy={remedy["Home Remedy"]}
-                      yogasan={remedy["Yogasan"]}
-                      index={index}
-                    />
-                  ))}
+                  {allRemedies.map((remedy, index) => {
+                    if (isAIRemedy(remedy)) {
+                      return (
+                        <AIRemedyCard
+                          key={`ai-${remedy.name}-${index}`}
+                          remedy={remedy}
+                          index={index}
+                        />
+                      );
+                    } else {
+                      return (
+                        <RemedyCard
+                          key={`dataset-${remedy["Name of Item"]}-${index}`}
+                          name={remedy["Name of Item"]}
+                          healthIssue={remedy["Health Issue"]}
+                          remedy={remedy["Home Remedy"]}
+                          yogasan={remedy["Yogasan"]}
+                          index={index}
+                        />
+                      );
+                    }
+                  })}
                 </AnimatePresence>
               </motion.div>
             </>
-          ) : (
+          ) : submittedQuery && !isLoadingAI ? (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -204,7 +319,7 @@ const Index = () => {
                 Try adjusting your search or browse our suggestions above
               </p>
             </motion.div>
-          )}
+          ) : null}
         </div>
 
         {/* Info Section */}
@@ -216,14 +331,31 @@ const Index = () => {
             className="mt-20 max-w-4xl mx-auto px-4 text-center pb-12"
           >
             <h2 className="text-3xl font-bold text-foreground mb-4 font-poppins">
-              Explore Natural Healing
+              🌿 Explore Natural Healing with AI
             </h2>
-            <p className="text-muted-foreground font-inter leading-relaxed">
-              Browse through our extensive collection of time-tested home remedies and yoga poses.
-              Each remedy is carefully documented with detailed instructions and recommended yoga
-              practices to complement your healing journey. Start by searching for a specific health
-              issue or explore the remedies shown above.
+            <p className="text-muted-foreground font-inter leading-relaxed mb-6">
+              Search for any health condition and discover both time-tested remedies from our database 
+              and cutting-edge AI-generated solutions. Each search combines traditional wisdom with 
+              modern AI to give you comprehensive healing options including home remedies, yoga poses, 
+              acupressure points, and dietary recommendations.
             </p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8">
+              <div className="p-4 bg-primary/5 rounded-lg">
+                <div className="text-3xl mb-2">📚</div>
+                <h4 className="font-semibold text-foreground mb-1">600+ Database Remedies</h4>
+                <p className="text-sm text-muted-foreground">Traditional proven solutions</p>
+              </div>
+              <div className="p-4 bg-secondary/5 rounded-lg">
+                <div className="text-3xl mb-2">✨</div>
+                <h4 className="font-semibold text-foreground mb-1">AI-Powered Insights</h4>
+                <p className="text-sm text-muted-foreground">Dynamic remedy generation</p>
+              </div>
+              <div className="p-4 bg-accent/5 rounded-lg">
+                <div className="text-3xl mb-2">💬</div>
+                <h4 className="font-semibold text-foreground mb-1">AI Assistant</h4>
+                <p className="text-sm text-muted-foreground">Ask anything about wellness</p>
+              </div>
+            </div>
           </motion.div>
         )}
       </div>
