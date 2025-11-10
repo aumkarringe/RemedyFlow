@@ -13,10 +13,10 @@ serve(async (req) => {
 
   try {
     const { message, conversationHistory } = await req.json();
-    const geminiApiKey = Deno.env.get('GEMINI_API_KEY');
+    const lovableApiKey = Deno.env.get('LOVABLE_API_KEY');
 
-    if (!geminiApiKey) {
-      throw new Error('GEMINI_API_KEY is not configured');
+    if (!lovableApiKey) {
+      throw new Error('LOVABLE_API_KEY is not configured');
     }
 
     console.log('AI Assistant request received:', { message });
@@ -78,37 +78,58 @@ Be comprehensive but practical. Focus on solutions people can implement at home.
       parts: [{ text: message }]
     });
 
-    console.log('Calling Gemini API...');
+    console.log('Calling Lovable AI...');
+
+    // Convert messages to OpenAI format
+    const chatMessages = [
+      { role: 'system', content: systemPrompt }
+    ];
+
+    if (conversationHistory && conversationHistory.length > 0) {
+      conversationHistory.forEach((msg: { role: string; content: string }) => {
+        chatMessages.push({
+          role: msg.role as 'user' | 'assistant',
+          content: msg.content
+        });
+      });
+    }
+
+    chatMessages.push({ role: 'user', content: message });
 
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${geminiApiKey}`,
+      'https://ai.gateway.lovable.dev/v1/chat/completions',
       {
         method: 'POST',
         headers: {
+          'Authorization': `Bearer ${lovableApiKey}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          contents: messages,
-          generationConfig: {
-            temperature: 0.7,
-            topK: 40,
-            topP: 0.95,
-            maxOutputTokens: 2048,
-          },
+          model: 'google/gemini-2.5-flash',
+          messages: chatMessages,
+          temperature: 0.7,
+          max_tokens: 2048,
         }),
       }
     );
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('Gemini API error:', response.status, errorText);
-      throw new Error(`Gemini API error: ${response.status}`);
+      console.error('Lovable AI error:', response.status, errorText);
+      
+      if (response.status === 429) {
+        throw new Error('Rate limit exceeded. Please try again in a moment.');
+      }
+      if (response.status === 402) {
+        throw new Error('AI credits exhausted. Please add credits to continue.');
+      }
+      throw new Error(`AI API error: ${response.status}`);
     }
 
     const data = await response.json();
-    console.log('Gemini API response received');
+    console.log('Lovable AI response received');
 
-    const aiResponse = data.candidates[0]?.content?.parts[0]?.text || 
+    const aiResponse = data.choices[0]?.message?.content || 
                       'I apologize, but I could not generate a response. Please try again.';
 
     return new Response(

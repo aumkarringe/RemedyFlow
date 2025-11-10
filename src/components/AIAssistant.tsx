@@ -35,51 +35,28 @@ export const AIAssistant = () => {
     setIsLoading(true);
 
     try {
-      const geminiApiKey = import.meta.env.VITE_GEMINI_API_KEY;
-      if (!geminiApiKey) {
-        throw new Error('GEMINI_API_KEY is not configured');
-      }
-
-      const systemPrompt = `You are a knowledgeable home remedies and natural health assistant. Provide helpful, safe, and evidence-based advice about:
-- Natural home remedies for common health issues
-- Yoga poses (Yogasan) for specific conditions
-- Acupressure points and their benefits
-- Dietary recommendations
-- Lifestyle modifications
-- Preventive care tips
-
-Always include safety warnings when appropriate and remind users to consult healthcare professionals for serious conditions.`;
-
       const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${geminiApiKey}`,
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-remedy-assistant`,
         {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
+            'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
           },
           body: JSON.stringify({
-            contents: [
-              {
-                role: 'user',
-                parts: [{ text: systemPrompt + '\n\nUser question: ' + userMessage }]
-              }
-            ],
-            generationConfig: {
-              temperature: 0.7,
-              topK: 40,
-              topP: 0.95,
-              maxOutputTokens: 1024,
-            },
+            message: userMessage,
+            conversationHistory: messages,
           }),
         }
       );
 
       if (!response.ok) {
-        throw new Error(`Gemini API error: ${response.status}`);
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to get AI response');
       }
 
       const data = await response.json();
-      const aiResponse = data.candidates[0]?.content?.parts[0]?.text || "I apologize, but I couldn't generate a response.";
+      const aiResponse = data.response || "I apologize, but I couldn't generate a response.";
 
       setMessages((prev) => [
         ...prev,
@@ -182,7 +159,7 @@ Always include safety warnings when appropriate and remind users to consult heal
                   </motion.div>
                   <div>
                     <h3 className="font-semibold text-foreground font-poppins">AI Remedy Assistant</h3>
-                    <p className="text-xs text-muted-foreground">Powered by Gemini</p>
+                    <p className="text-xs text-muted-foreground">Powered by Lovable AI</p>
                   </div>
                 </div>
                 <Button
