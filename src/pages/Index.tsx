@@ -6,6 +6,10 @@ import { SearchBar } from "@/components/SearchBar";
 import { RemedyCard } from "@/components/RemedyCard";
 import { AIRemedyCard } from "@/components/AIRemedyCard";
 import { ViewToggle } from "@/components/ViewToggle";
+import { SymptomChecker } from "@/components/SymptomChecker";
+import { IngredientFinder } from "@/components/IngredientFinder";
+import { RemedyTracker } from "@/components/RemedyTracker";
+import { DailyWellnessTip } from "@/components/DailyWellnessTip";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { AIAssistant } from "@/components/AIAssistant";
 import remediesData from "@/assets/remedies.json";
@@ -202,37 +206,64 @@ const Index = () => {
           onSuggestionClick={handleSuggestionClick}
         />
 
-        {/* Category Quick Filters */}
         {!submittedQuery && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
-            className="mt-8 max-w-5xl mx-auto px-4"
-          >
-            <h3 className="text-center text-sm font-semibold text-muted-foreground mb-4 font-poppins">
-              Popular Health Issues
-            </h3>
-            <div className="flex flex-wrap justify-center gap-2">
-              {categories.map((cat) => (
-                <motion.button
-                  key={cat}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={() => {
-                    setSearchQuery(cat);
-                    setSubmittedQuery(cat);
-                    setAiRemedies([]);
-                    const datasetResults = fuse.search(cat).map((result) => result.item);
-                    generateAIRemedies(cat, datasetResults);
-                  }}
-                  className="px-4 py-2 bg-primary/10 hover:bg-primary/20 text-primary rounded-full text-sm font-medium transition-colors"
-                >
-                  {cat}
-                </motion.button>
-              ))}
+          <>
+            <div className="mt-8 max-w-5xl mx-auto px-4">
+              <DailyWellnessTip />
             </div>
-          </motion.div>
+
+            <div className="mt-8 max-w-5xl mx-auto px-4 grid md:grid-cols-2 gap-6">
+              <SymptomChecker
+                onSearch={(symptoms) => {
+                  const query = symptoms.join(", ");
+                  setSearchQuery(query);
+                  handleSearch();
+                }}
+              />
+              <IngredientFinder
+                onSearch={(ingredients) => {
+                  const query = `remedies with ${ingredients.join(", ")}`;
+                  setSearchQuery(query);
+                  handleSearch();
+                }}
+              />
+            </div>
+
+            <div className="mt-8 max-w-5xl mx-auto px-4">
+              <RemedyTracker />
+            </div>
+
+            {/* Category Quick Filters */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+              className="mt-8 max-w-5xl mx-auto px-4"
+            >
+              <h3 className="text-center text-sm font-semibold text-muted-foreground mb-4 font-poppins">
+                Popular Health Issues
+              </h3>
+              <div className="flex flex-wrap justify-center gap-2">
+                {categories.map((cat) => (
+                  <motion.button
+                    key={cat}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => {
+                      setSearchQuery(cat);
+                      setSubmittedQuery(cat);
+                      setAiRemedies([]);
+                      const datasetResults = fuse.search(cat).map((result) => result.item);
+                      generateAIRemedies(cat, datasetResults);
+                    }}
+                    className="px-4 py-2 bg-primary/10 hover:bg-primary/20 text-primary rounded-full text-sm font-medium transition-colors"
+                  >
+                    {cat}
+                  </motion.button>
+                ))}
+              </div>
+            </motion.div>
+          </>
         )}
 
         {/* AI Loading Indicator */}
