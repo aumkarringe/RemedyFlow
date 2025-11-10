@@ -3,7 +3,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Send, Sparkles, X, Loader2, MessageCircle } from "lucide-react";
 import { Button } from "./ui/button";
 import { Card } from "./ui/card";
-import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
 interface Message {
@@ -36,26 +35,61 @@ export const AIAssistant = () => {
     setIsLoading(true);
 
     try {
-      const { data, error } = await supabase.functions.invoke('ai-remedy-assistant', {
-        body: {
-          message: userMessage,
-          conversationHistory: messages
-        }
-      });
-
-      if (error) throw error;
-
-      if (data?.response) {
-        setMessages((prev) => [
-          ...prev,
-          { role: "assistant", content: data.response }
-        ]);
+      const geminiApiKey = import.meta.env.VITE_GEMINI_API_KEY;
+      if (!geminiApiKey) {
+        throw new Error('GEMINI_API_KEY is not configured');
       }
+
+      const systemPrompt = `You are a knowledgeable home remedies and natural health assistant. Provide helpful, safe, and evidence-based advice about:
+- Natural home remedies for common health issues
+- Yoga poses (Yogasan) for specific conditions
+- Acupressure points and their benefits
+- Dietary recommendations
+- Lifestyle modifications
+- Preventive care tips
+
+Always include safety warnings when appropriate and remind users to consult healthcare professionals for serious conditions.`;
+
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${geminiApiKey}`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            contents: [
+              {
+                role: 'user',
+                parts: [{ text: systemPrompt + '\n\nUser question: ' + userMessage }]
+              }
+            ],
+            generationConfig: {
+              temperature: 0.7,
+              topK: 40,
+              topP: 0.95,
+              maxOutputTokens: 1024,
+            },
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`Gemini API error: ${response.status}`);
+      }
+
+      const data = await response.json();
+      const aiResponse = data.candidates[0]?.content?.parts[0]?.text || "I apologize, but I couldn't generate a response.";
+
+      setMessages((prev) => [
+        ...prev,
+        { role: "assistant", content: aiResponse }
+      ]);
     } catch (error) {
       console.error('Error calling AI assistant:', error);
       toast({
         title: "Error",
-        description: "Failed to get AI response. Please try again.",
+        description: error instanceof Error ? error.message : "Failed to get AI response. Please try again.",
         variant: "destructive"
       });
     } finally {

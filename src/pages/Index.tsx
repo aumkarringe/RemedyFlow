@@ -10,7 +10,6 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import { AIAssistant } from "@/components/AIAssistant";
 import remediesData from "@/assets/remedies.json";
 import { Remedy, AIRemedy, isAIRemedy } from "@/types/remedy";
-import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Sparkles } from "lucide-react";
 
@@ -87,32 +86,116 @@ const Index = () => {
   const generateAIRemedies = async (query: string, datasetResults: Remedy[]) => {
     setIsLoadingAI(true);
     try {
-      const { data, error } = await supabase.functions.invoke('generate-remedies', {
-        body: {
-          healthIssue: query,
-          datasetResults: datasetResults.map(r => ({
-            'Name of Item': r['Name of Item'],
-            'Health Issue': r['Health Issue']
-          }))
-        }
-      });
+      const geminiApiKey = import.meta.env.VITE_GEMINI_API_KEY;
+      if (!geminiApiKey) {
+        throw new Error('GEMINI_API_KEY is not configured');
+      }
 
-      if (error) throw error;
+      const hasDatasetResults = datasetResults && datasetResults.length > 0;
+      
+      const prompt = hasDatasetResults 
+        ? `You found ${datasetResults.length} remedies in the database for "${query}". 
+           Please provide 3-5 ADDITIONAL complementary home remedies that are NOT in this list: ${JSON.stringify(datasetResults.map((r) => r['Name of Item']))}.
+           
+           Focus on:
+           - Different natural ingredients
+           - Alternative approaches
+           - Modern scientific remedies
+           - Traditional remedies from different cultures`
+        : `Generate 5-7 comprehensive home remedies for "${query}".`;
 
-      if (data?.remedies && Array.isArray(data.remedies)) {
-        setAiRemedies(data.remedies);
-        if (data.remedies.length > 0) {
-          toast({
-            title: "✨ AI Remedies Generated",
-            description: `Found ${data.remedies.length} additional AI-powered remedies!`,
-          });
+      const fullPrompt = `${prompt}
+
+CRITICAL: You MUST respond with ONLY a valid JSON array. No markdown, no explanations, no code blocks, just pure JSON.
+
+Generate remedies in this EXACT format:
+[
+  {
+    "name": "Ingredient/Remedy Name",
+    "healthIssue": "${query}",
+    "remedy": "Detailed preparation and usage instructions (at least 2-3 sentences)",
+    "yogasan": "Specific yoga pose name with brief instructions",
+    "acupressure": "Specific pressure point name and location",
+    "benefits": "Key benefits in one sentence",
+    "precautions": "Any warnings or who should avoid",
+    "duration": "How long to use this remedy",
+    "source": "AI-Generated"
+  }
+]
+
+Requirements:
+1. Each remedy must be practical and safe
+2. Include detailed preparation steps
+3. Specify exact quantities where applicable
+4. Mention frequency of use
+5. All remedies should be different from each other
+6. Focus on natural, accessible ingredients
+7. Include scientific rationale where possible
+
+Return ONLY the JSON array, nothing else.`;
+
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${geminiApiKey}`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            contents: [{
+              role: 'user',
+              parts: [{ text: fullPrompt }]
+            }],
+            generationConfig: {
+              temperature: 0.8,
+              topK: 40,
+              topP: 0.95,
+              maxOutputTokens: 2048,
+            },
+          }),
         }
+      );
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Gemini API error:', response.status, errorText);
+        throw new Error(`Gemini API error: ${response.status}`);
+      }
+
+      const data = await response.json();
+      let aiResponse = data.candidates[0]?.content?.parts[0]?.text || '[]';
+      
+      console.log('Raw AI response:', aiResponse);
+      
+      // Clean up the response
+      aiResponse = aiResponse.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+      
+      let remedies;
+      try {
+        remedies = JSON.parse(aiResponse);
+      } catch (parseError) {
+        console.error('JSON parse error:', parseError);
+        remedies = [];
+      }
+
+      if (!Array.isArray(remedies)) {
+        remedies = [];
+      }
+
+      console.log('Generated remedies count:', remedies.length);
+      
+      if (remedies.length > 0) {
+        setAiRemedies(remedies);
+        toast({
+          title: "✨ AI Remedies Generated",
+          description: `Found ${remedies.length} additional AI-powered remedies!`,
+        });
       }
     } catch (error) {
       console.error('Error generating AI remedies:', error);
       toast({
         title: "AI Generation Error",
-        description: "Could not generate AI remedies. Showing dataset results only.",
+        description: error instanceof Error ? error.message : "Could not generate AI remedies.",
         variant: "destructive"
       });
     } finally {
