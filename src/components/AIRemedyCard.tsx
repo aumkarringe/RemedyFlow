@@ -1,11 +1,10 @@
 import { motion } from "framer-motion";
-import { ChevronDown, Sparkles, Heart, Share2, Printer, Copy, Zap, Bookmark } from "lucide-react";
+import { ChevronDown, Sparkles, Heart, Share2, Printer, Copy, Zap } from "lucide-react";
 import { useState, forwardRef } from "react";
 import { Card } from "./ui/card";
 import { Button } from "./ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { AIRemedy } from "@/types/remedy";
-import { trackRemedy } from "./RemedyTracker";
 
 interface AIRemedyCardProps {
   remedy: AIRemedy;
@@ -18,7 +17,6 @@ export const AIRemedyCard = forwardRef<HTMLDivElement, AIRemedyCardProps>(({
 }, ref) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [isFavorite, setIsFavorite] = useState(false);
-  const [isTracked, setIsTracked] = useState(false);
   const { toast } = useToast();
 
   const handleCopy = () => {
@@ -46,16 +44,6 @@ export const AIRemedyCard = forwardRef<HTMLDivElement, AIRemedyCardProps>(({
       </html>
     `);
     printWindow?.print();
-  };
-
-  const handleTrack = () => {
-    trackRemedy(remedy.name, remedy.healthIssue);
-    setIsTracked(true);
-    toast({
-      title: "Added to tracker",
-      description: "You can now rate this remedy's effectiveness",
-    });
-    setTimeout(() => setIsTracked(false), 2000);
   };
 
   return (
@@ -99,30 +87,17 @@ export const AIRemedyCard = forwardRef<HTMLDivElement, AIRemedyCardProps>(({
                 {remedy.healthIssue}
               </div>
             </div>
-            <div className="flex gap-1">
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setIsFavorite(!isFavorite)}
-                className="hover:bg-primary/10"
-              >
-                <Heart
-                  size={20}
-                  className={`${isFavorite ? 'fill-red-500 text-red-500' : 'text-muted-foreground'} transition-colors`}
-                />
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={handleTrack}
-                className="hover:bg-primary/10"
-              >
-                <Bookmark
-                  size={20}
-                  className={`${isTracked ? 'fill-primary text-primary' : 'text-muted-foreground'} transition-colors`}
-                />
-              </Button>
-            </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setIsFavorite(!isFavorite)}
+              className="hover:bg-primary/10"
+            >
+              <Heart
+                size={20}
+                className={`${isFavorite ? 'fill-red-500 text-red-500' : 'text-muted-foreground'} transition-colors`}
+              />
+            </Button>
           </div>
 
           {/* Quick Actions */}
