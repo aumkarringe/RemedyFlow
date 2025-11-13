@@ -138,7 +138,7 @@ export default function Home() {
                   <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
                 </Button>
               </Link>
-              <Link to="/ai-tools">
+              <Link to="/ai/symptoms">
                 <Button size="lg" variant="outline" className="text-lg px-8 py-6">
                   <Brain className="mr-2 w-5 h-5" />
                   Try AI Tools

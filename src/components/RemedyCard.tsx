@@ -4,7 +4,6 @@ import { useState, forwardRef } from "react";
 import { Card } from "./ui/card";
 import { Button } from "./ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { trackRemedy } from "./RemedyTracker";
 
 interface RemedyCardProps {
   name: string;
@@ -54,11 +53,10 @@ export const RemedyCard = forwardRef<HTMLDivElement, RemedyCardProps>(({
   };
 
   const handleTrack = () => {
-    trackRemedy(name, healthIssue);
     setIsTracked(true);
     toast({
-      title: "Added to tracker",
-      description: "You can now rate this remedy's effectiveness",
+      title: "Bookmarked",
+      description: "Remedy saved to your favorites",
     });
     setTimeout(() => setIsTracked(false), 2000);
   };

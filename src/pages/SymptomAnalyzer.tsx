@@ -1,19 +1,23 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { Navbar } from "@/components/Navbar";
-import { SymptomChecker } from "@/components/SymptomChecker";
 import { AIRemedyCard } from "@/components/AIRemedyCard";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Sparkles, Stethoscope } from "lucide-react";
 import { AIRemedy } from "@/types/remedy";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 
 export default function SymptomAnalyzer() {
   const [aiRemedies, setAiRemedies] = useState<AIRemedy[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [symptomInput, setSymptomInput] = useState("");
   const { toast } = useToast();
 
-  const handleSymptomAnalysis = async (symptoms: string[]) => {
+  const handleSymptomAnalysis = async () => {
+    if (!symptomInput.trim()) return;
+    
     setIsLoading(true);
     setAiRemedies([]);
     
@@ -21,7 +25,7 @@ export default function SymptomAnalyzer() {
       const { data, error } = await supabase.functions.invoke('ai-chat', {
         body: {
           messages: [
-            { role: "user", content: `Analyze these symptoms: ${symptoms.join(', ')}. Provide potential causes, recommend appropriate home remedies, suggest lifestyle changes, and advise when to seek medical attention. Format as JSON array with 3-5 remedy entries, each containing: name (remedy name), healthIssue (the symptom addressed), remedy (detailed instructions), benefits, precautions, duration.` }
+            { role: "user", content: `Analyze these symptoms: ${symptomInput}. Provide potential causes, recommend appropriate home remedies, suggest lifestyle changes, and advise when to seek medical attention. Format as JSON array with 3-5 remedy entries, each containing: name (remedy name), healthIssue (the symptom addressed), remedy (detailed instructions), benefits, precautions, duration.` }
           ],
           systemPrompt: "You are a medical AI assistant. Provide symptom analysis and safe home remedy recommendations. Always respond with valid JSON array."
         }
@@ -76,8 +80,24 @@ export default function SymptomAnalyzer() {
           <motion.div
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
+            className="bg-card rounded-2xl p-6 shadow-[var(--shadow-card)] border border-border"
           >
-            <SymptomChecker onSearch={handleSymptomAnalysis} />
+            <h2 className="text-xl font-semibold mb-4 font-poppins text-foreground">
+              Describe Your Symptoms
+            </h2>
+            <div className="flex gap-3">
+              <Input
+                placeholder="e.g., headache, sore throat, fatigue..."
+                value={symptomInput}
+                onChange={(e) => setSymptomInput(e.target.value)}
+                onKeyPress={(e) => e.key === "Enter" && handleSymptomAnalysis()}
+                className="flex-1"
+              />
+              <Button onClick={handleSymptomAnalysis} disabled={isLoading || !symptomInput.trim()}>
+                <Sparkles className="w-4 h-4 mr-2" />
+                Analyze
+              </Button>
+            </div>
           </motion.div>
 
           {isLoading && (

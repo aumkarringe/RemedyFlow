@@ -12,11 +12,9 @@ export function Navbar() {
   const navItems = [
     { path: "/", label: "Home", icon: Home },
     { path: "/remedies", label: "Remedies", icon: Leaf },
-    { path: "/tracker", label: "Tracker", icon: Heart },
   ];
 
   const aiToolsItems = [
-    { path: "/ai/compare", label: "Remedy Comparison" },
     { path: "/ai/symptoms", label: "Symptom Analyzer" },
     { path: "/ai/journal", label: "Health Journal" },
     { path: "/ai/safety", label: "Safety Check" },

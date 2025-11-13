@@ -3,6 +3,12 @@ project_id = "qmsquwgvnohdchlkzczq"
 [functions.ai-chat]
 verify_jwt = false
 
+[functions.generate-remedies]
+verify_jwt = false
+
+[functions.ai-remedy-assistant]
+verify_jwt = false
+
 [functions.ai-remedy-assistant]
 verify_jwt = false
 

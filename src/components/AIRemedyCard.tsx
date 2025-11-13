@@ -5,7 +5,6 @@ import { Card } from "./ui/card";
 import { Button } from "./ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { AIRemedy } from "@/types/remedy";
-import { trackRemedy } from "./RemedyTracker";
 
 interface AIRemedyCardProps {
   remedy: AIRemedy;
@@ -49,11 +48,10 @@ export const AIRemedyCard = forwardRef<HTMLDivElement, AIRemedyCardProps>(({
   };
 
   const handleTrack = () => {
-    trackRemedy(remedy.name, remedy.healthIssue);
     setIsTracked(true);
     toast({
-      title: "Added to tracker",
-      description: "You can now rate this remedy's effectiveness",
+      title: "Bookmarked",
+      description: "Remedy saved to your favorites",
     });
     setTimeout(() => setIsTracked(false), 2000);
   };

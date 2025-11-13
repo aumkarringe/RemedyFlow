@@ -5,14 +5,14 @@ import { SearchBar } from "@/components/SearchBar";
 import { RemedyCard } from "@/components/RemedyCard";
 import { AIRemedyCard } from "@/components/AIRemedyCard";
 import { ViewToggle } from "@/components/ViewToggle";
-import { SymptomChecker } from "@/components/SymptomChecker";
-import { IngredientFinder } from "@/components/IngredientFinder";
 import { Navbar } from "@/components/Navbar";
 import { AIAssistant } from "@/components/AIAssistant";
+import { DailyWellnessTip } from "@/components/DailyWellnessTip";
 import remediesData from "@/assets/remedies.json";
 import { Remedy, AIRemedy, isAIRemedy } from "@/types/remedy";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Sparkles } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 export default function Remedies() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -80,35 +80,28 @@ export default function Remedies() {
   const generateAIRemedies = async (query: string, datasetResults: Remedy[]) => {
     setIsLoadingAI(true);
     try {
-      const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${import.meta.env.VITE_GEMINI_API_KEY}`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contents: [{
-              parts: [{
-                text: `Provide 3-5 additional home remedies for "${query}". Format each as JSON with: name, healthIssue, remedy, benefits, duration, precautions. Return as JSON array.`
-              }]
-            }]
-          })
+      const { data, error } = await supabase.functions.invoke('generate-remedies', {
+        body: {
+          healthIssue: query,
+          datasetResults: datasetResults
         }
-      );
+      });
 
-      const data = await response.json();
-      const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
-      const jsonMatch = text.match(/\[[\s\S]*\]/);
-      
-      if (jsonMatch) {
-        const remedies = JSON.parse(jsonMatch[0]);
-        setAiRemedies(remedies);
+      if (error) throw error;
+
+      if (data.remedies && data.remedies.length > 0) {
+        setAiRemedies(data.remedies);
         toast({
           title: "✨ AI Remedies Generated",
-          description: `Found ${remedies.length} additional AI-powered remedies!`,
+          description: `Found ${data.remedies.length} additional AI-powered remedies!`,
         });
       }
     } catch (error) {
       console.error('Error generating AI remedies:', error);
+      toast({
+        title: "Info",
+        description: "Showing database results only",
+      });
     } finally {
       setIsLoadingAI(false);
     }
@@ -175,12 +168,15 @@ export default function Remedies() {
         >
           <h1 className="text-4xl md:text-5xl font-bold text-center mb-4 font-poppins">
             <span className="bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-              Search Remedies
+              Discover Natural Remedies
             </span>
           </h1>
-          <p className="text-center text-muted-foreground text-lg max-w-2xl mx-auto">
-            Discover natural healing solutions from our comprehensive database
+          <p className="text-center text-muted-foreground text-lg max-w-2xl mx-auto mb-6">
+            Search our extensive database enhanced with AI-powered recommendations
           </p>
+          <div className="max-w-2xl mx-auto">
+            <DailyWellnessTip />
+          </div>
         </motion.div>
 
         <SearchBar
@@ -193,61 +189,38 @@ export default function Remedies() {
         />
 
         {!submittedQuery && (
-          <>
-            <div className="mt-8 max-w-5xl mx-auto px-4 grid md:grid-cols-2 gap-6">
-              <SymptomChecker
-                onSearch={(symptoms) => {
-                  const query = symptoms.join(", ");
-                  setSearchQuery(query);
-                  setSubmittedQuery(query);
-                  const results = fuse.search(query).map((r) => r.item);
-                  generateAIRemedies(query, results);
-                }}
-              />
-              <IngredientFinder
-                onSearch={(ingredients) => {
-                  const query = `remedies with ${ingredients.join(", ")}`;
-                  setSearchQuery(query);
-                  setSubmittedQuery(query);
-                  const results = fuse.search(query).map((r) => r.item);
-                  generateAIRemedies(query, results);
-                }}
-              />
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+            className="mt-12 max-w-7xl mx-auto px-4"
+          >
+            <h3 className="text-center text-sm font-semibold text-muted-foreground mb-6 font-poppins">
+              Popular Health Conditions
+            </h3>
+            <div className="flex flex-wrap justify-center gap-3">
+              {categories.map((cat, idx) => (
+                <motion.button
+                  key={cat}
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: idx * 0.05 }}
+                  whileHover={{ scale: 1.05, y: -2 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => {
+                    setSearchQuery(cat);
+                    setSubmittedQuery(cat);
+                    setAiRemedies([]);
+                    const results = fuse.search(cat).map((r) => r.item);
+                    generateAIRemedies(cat, results);
+                  }}
+                  className="px-5 py-2.5 bg-gradient-to-r from-primary/10 to-secondary/10 hover:from-primary/20 hover:to-secondary/20 text-primary rounded-full text-sm font-medium transition-all shadow-sm hover:shadow-md border border-primary/20"
+                >
+                  {cat}
+                </motion.button>
+              ))}
             </div>
-
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3 }}
-              className="mt-8 max-w-7xl mx-auto px-4"
-            >
-              <h3 className="text-center text-sm font-semibold text-muted-foreground mb-4 font-poppins">
-                Popular Health Issues
-              </h3>
-              <div className="flex flex-wrap justify-center gap-2">
-                {categories.map((cat, idx) => (
-                  <motion.button
-                    key={cat}
-                    initial={{ opacity: 0, scale: 0.8 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ delay: idx * 0.05 }}
-                    whileHover={{ scale: 1.05, y: -2 }}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={() => {
-                      setSearchQuery(cat);
-                      setSubmittedQuery(cat);
-                      setAiRemedies([]);
-                      const results = fuse.search(cat).map((r) => r.item);
-                      generateAIRemedies(cat, results);
-                    }}
-                    className="px-4 py-2 bg-primary/10 hover:bg-primary/20 text-primary rounded-full text-sm font-medium transition-all shadow-sm hover:shadow-md"
-                  >
-                    {cat}
-                  </motion.button>
-                ))}
-              </div>
-            </motion.div>
-          </>
+          </motion.div>
         )}
 
         {isLoadingAI && (
@@ -256,12 +229,12 @@ export default function Remedies() {
             animate={{ opacity: 1, y: 0 }}
             className="mt-8 max-w-5xl mx-auto px-4"
           >
-            <div className="flex items-center justify-center gap-3 p-4 bg-gradient-to-r from-primary/10 to-secondary/10 rounded-xl border border-primary/20">
-              <Loader2 className="w-5 h-5 animate-spin text-primary" />
-              <span className="text-sm font-medium text-foreground">
-                Generating AI-powered remedies...
+            <div className="flex items-center justify-center gap-3 p-6 bg-gradient-to-r from-primary/10 to-secondary/10 rounded-xl border border-primary/20">
+              <Loader2 className="w-6 h-6 animate-spin text-primary" />
+              <span className="text-base font-medium text-foreground">
+                Analyzing and generating personalized remedies with Gemini AI...
               </span>
-              <Sparkles className="w-5 h-5 text-secondary animate-pulse" />
+              <Sparkles className="w-6 h-6 text-secondary animate-pulse" />
             </div>
           </motion.div>
         )}
