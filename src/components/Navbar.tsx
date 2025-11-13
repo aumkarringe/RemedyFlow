@@ -12,8 +12,15 @@ export function Navbar() {
   const navItems = [
     { path: "/", label: "Home", icon: Home },
     { path: "/remedies", label: "Remedies", icon: Leaf },
-    { path: "/ai-tools", label: "AI Tools", icon: Brain },
     { path: "/tracker", label: "Tracker", icon: Heart },
+  ];
+
+  const aiToolsItems = [
+    { path: "/ai/compare", label: "Remedy Comparison" },
+    { path: "/ai/symptoms", label: "Symptom Analyzer" },
+    { path: "/ai/journal", label: "Health Journal" },
+    { path: "/ai/safety", label: "Safety Check" },
+    { path: "/ai/wellness-plan", label: "Wellness Plan" },
   ];
 
   const isActive = (path: string) => location.pathname === path;
@@ -71,6 +78,31 @@ export function Navbar() {
                 </Link>
               );
             })}
+            
+            {/* AI Tools Dropdown */}
+            <div className="relative group">
+              <motion.div
+                whileHover={{ scale: 1.05 }}
+                className="px-4 py-2 rounded-lg text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+              >
+                <div className="flex items-center gap-2">
+                  <Brain className="w-4 h-4" />
+                  <span className="text-sm font-medium">AI Tools</span>
+                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </div>
+              </motion.div>
+              <div className="absolute top-full left-0 mt-2 w-56 bg-card border border-border rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                {aiToolsItems.map((item) => (
+                  <Link key={item.path} to={item.path}>
+                    <div className="px-4 py-3 text-sm text-foreground hover:bg-accent hover:text-accent-foreground transition-colors first:rounded-t-lg last:rounded-b-lg">
+                      {item.label}
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </div>
           </div>
 
           {/* Right side */}
@@ -123,6 +155,25 @@ export function Navbar() {
                 </Link>
               );
             })}
+            
+            {/* AI Tools Mobile Section */}
+            <div className="pt-2 border-t border-border">
+              <div className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-muted-foreground">
+                <Brain className="w-4 h-4" />
+                <span>AI Tools</span>
+              </div>
+              {aiToolsItems.map((item) => (
+                <Link
+                  key={item.path}
+                  to={item.path}
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  <div className="pl-10 pr-4 py-2 text-sm text-muted-foreground hover:bg-muted transition-colors">
+                    {item.label}
+                  </div>
+                </Link>
+              ))}
+            </div>
           </motion.div>
         )}
       </div>

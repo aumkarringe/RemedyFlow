@@ -6,8 +6,12 @@ import { HashRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "@/components/theme-provider";
 import Home from "./pages/Home";
 import Remedies from "./pages/Remedies";
-import AITools from "./pages/AITools";
 import Tracker from "./pages/Tracker";
+import RemedyComparison from "./pages/RemedyComparison";
+import HealthJournalPage from "./pages/HealthJournalPage";
+import SafetyCheck from "./pages/SafetyCheck";
+import WellnessPlan from "./pages/WellnessPlan";
+import SymptomAnalyzer from "./pages/SymptomAnalyzer";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -22,8 +26,12 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/remedies" element={<Remedies />} />
-            <Route path="/ai-tools" element={<AITools />} />
             <Route path="/tracker" element={<Tracker />} />
+            <Route path="/ai/compare" element={<RemedyComparison />} />
+            <Route path="/ai/journal" element={<HealthJournalPage />} />
+            <Route path="/ai/safety" element={<SafetyCheck />} />
+            <Route path="/ai/wellness-plan" element={<WellnessPlan />} />
+            <Route path="/ai/symptoms" element={<SymptomAnalyzer />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </HashRouter>
