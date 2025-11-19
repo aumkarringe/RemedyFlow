@@ -15,10 +15,19 @@ export function Navbar() {
   ];
 
   const aiToolsItems = [
+    { path: "/ai/chatbot", label: "AI Chatbot" },
+    { path: "/ai/daily-tips", label: "Daily Tips" },
     { path: "/ai/symptoms", label: "Symptom Analyzer" },
     { path: "/ai/journal", label: "Health Journal" },
     { path: "/ai/safety", label: "Safety Check" },
     { path: "/ai/wellness-plan", label: "Wellness Plan" },
+    { path: "/ai/dosage", label: "Dosage Calculator" },
+    { path: "/ai/preparation", label: "Preparation Guide" },
+    { path: "/ai/seasonal", label: "Seasonal Remedies" },
+    { path: "/ai/beauty", label: "Natural Beauty" },
+    { path: "/ai/sleep", label: "Sleep Optimizer" },
+    { path: "/ai/stress", label: "Stress Relief" },
+    { path: "/ai/immunity", label: "Immunity Booster" },
   ];
 
   const isActive = (path: string) => location.pathname === path;

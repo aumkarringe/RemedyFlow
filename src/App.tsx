@@ -10,6 +10,15 @@ import HealthJournalPage from "./pages/HealthJournalPage";
 import SafetyCheck from "./pages/SafetyCheck";
 import WellnessPlan from "./pages/WellnessPlan";
 import SymptomAnalyzer from "./pages/SymptomAnalyzer";
+import AIChatbot from "./pages/AIChatbot";
+import DailyTips from "./pages/DailyTips";
+import DosageCalculator from "./pages/DosageCalculator";
+import PreparationGuide from "./pages/PreparationGuide";
+import SeasonalRemedies from "./pages/SeasonalRemedies";
+import NaturalBeauty from "./pages/NaturalBeauty";
+import SleepOptimizer from "./pages/SleepOptimizer";
+import StressRelief from "./pages/StressRelief";
+import ImmunityBooster from "./pages/ImmunityBooster";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -24,10 +33,19 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/remedies" element={<Remedies />} />
+            <Route path="/ai/chatbot" element={<AIChatbot />} />
+            <Route path="/ai/daily-tips" element={<DailyTips />} />
             <Route path="/ai/journal" element={<HealthJournalPage />} />
             <Route path="/ai/safety" element={<SafetyCheck />} />
             <Route path="/ai/wellness-plan" element={<WellnessPlan />} />
             <Route path="/ai/symptoms" element={<SymptomAnalyzer />} />
+            <Route path="/ai/dosage" element={<DosageCalculator />} />
+            <Route path="/ai/preparation" element={<PreparationGuide />} />
+            <Route path="/ai/seasonal" element={<SeasonalRemedies />} />
+            <Route path="/ai/beauty" element={<NaturalBeauty />} />
+            <Route path="/ai/sleep" element={<SleepOptimizer />} />
+            <Route path="/ai/stress" element={<StressRelief />} />
+            <Route path="/ai/immunity" element={<ImmunityBooster />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </HashRouter>
