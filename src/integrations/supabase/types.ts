@@ -14,7 +14,156 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      health_searches: {
+        Row: {
+          category: string | null
+          health_issue: string
+          id: string
+          searched_at: string | null
+          user_id: string
+        }
+        Insert: {
+          category?: string | null
+          health_issue: string
+          id?: string
+          searched_at?: string | null
+          user_id: string
+        }
+        Update: {
+          category?: string | null
+          health_issue?: string
+          id?: string
+          searched_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string | null
+          display_name: string | null
+          id: string
+          preferences: Json | null
+          updated_at: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string | null
+          display_name?: string | null
+          id: string
+          preferences?: Json | null
+          updated_at?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string | null
+          display_name?: string | null
+          id?: string
+          preferences?: Json | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      saved_remedies: {
+        Row: {
+          created_at: string | null
+          effectiveness_rating: number | null
+          health_issue: string
+          id: string
+          is_favorite: boolean | null
+          notes: string | null
+          remedy_details: Json
+          remedy_name: string
+          tried: boolean | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          effectiveness_rating?: number | null
+          health_issue: string
+          id?: string
+          is_favorite?: boolean | null
+          notes?: string | null
+          remedy_details: Json
+          remedy_name: string
+          tried?: boolean | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          effectiveness_rating?: number | null
+          health_issue?: string
+          id?: string
+          is_favorite?: boolean | null
+          notes?: string | null
+          remedy_details?: Json
+          remedy_name?: string
+          tried?: boolean | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      wellness_plans: {
+        Row: {
+          created_at: string | null
+          id: string
+          plan_data: Json
+          user_id: string
+          week_start: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          plan_data: Json
+          user_id: string
+          week_start: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          plan_data?: Json
+          user_id?: string
+          week_start?: string
+        }
+        Relationships: []
+      }
+      wellness_stats: {
+        Row: {
+          digestion_health: number | null
+          fatigue_level: number | null
+          id: string
+          immunity_score: number | null
+          recorded_at: string | null
+          sleep_quality: number | null
+          stress_level: number | null
+          user_id: string
+        }
+        Insert: {
+          digestion_health?: number | null
+          fatigue_level?: number | null
+          id?: string
+          immunity_score?: number | null
+          recorded_at?: string | null
+          sleep_quality?: number | null
+          stress_level?: number | null
+          user_id: string
+        }
+        Update: {
+          digestion_health?: number | null
+          fatigue_level?: number | null
+          id?: string
+          immunity_score?: number | null
+          recorded_at?: string | null
+          sleep_quality?: number | null
+          stress_level?: number | null
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

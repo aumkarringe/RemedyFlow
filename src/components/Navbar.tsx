@@ -1,17 +1,20 @@
 import { Link, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Sparkles, Home, Leaf, Brain, Heart, Menu, X } from "lucide-react";
+import { Sparkles, Home, Leaf, Brain, Heart, Menu, X, LayoutDashboard, LogIn, LogOut, User } from "lucide-react";
 import { ThemeToggle } from "./ThemeToggle";
 import { useState } from "react";
 import { Button } from "./ui/button";
+import { useAuth } from "@/hooks/useAuth";
 
 export function Navbar() {
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { user, signOut } = useAuth();
 
   const navItems = [
     { path: "/", label: "Home", icon: Home },
     { path: "/remedies", label: "Remedies", icon: Leaf },
+    { path: "/dashboard", label: "Dashboard", icon: LayoutDashboard, requiresAuth: true },
   ];
 
   const aiToolsItems = [
@@ -59,6 +62,8 @@ export function Navbar() {
             {navItems.map((item) => {
               const Icon = item.icon;
               const active = isActive(item.path);
+              // Skip auth-required items if user is not logged in
+              if (item.requiresAuth && !user) return null;
               return (
                 <Link key={item.path} to={item.path}>
                   <motion.div
@@ -115,6 +120,26 @@ export function Navbar() {
           {/* Right side */}
           <div className="flex items-center gap-2">
             <ThemeToggle />
+            
+            {/* Auth buttons */}
+            {user ? (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => signOut()}
+                className="hidden md:flex items-center gap-2"
+              >
+                <LogOut className="w-4 h-4" />
+                Sign Out
+              </Button>
+            ) : (
+              <Link to="/auth" className="hidden md:block">
+                <Button size="sm" className="flex items-center gap-2">
+                  <LogIn className="w-4 h-4" />
+                  Sign In
+                </Button>
+              </Link>
+            )}
             
             {/* Mobile menu button */}
             <Button

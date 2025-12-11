@@ -9,8 +9,5 @@ verify_jwt = false
 [functions.ai-remedy-assistant]
 verify_jwt = false
 
-[functions.ai-remedy-assistant]
-verify_jwt = false
-
-[functions.generate-remedies]
+[functions.wellness-insights]
 verify_jwt = false
