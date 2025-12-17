@@ -12,7 +12,6 @@ import SafetyCheck from "./pages/SafetyCheck";
 import WellnessPlan from "./pages/WellnessPlan";
 import SymptomAnalyzer from "./pages/SymptomAnalyzer";
 import AIChatbot from "./pages/AIChatbot";
-import DailyTips from "./pages/DailyTips";
 import DosageCalculator from "./pages/DosageCalculator";
 import PreparationGuide from "./pages/PreparationGuide";
 import SeasonalRemedies from "./pages/SeasonalRemedies";
@@ -31,7 +30,7 @@ const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <ThemeProvider defaultTheme="light" storageKey="remedyflow-theme">
+    <ThemeProvider>
       <AuthProvider>
         <TooltipProvider>
           <Toaster />
@@ -43,7 +42,6 @@ const App = () => (
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/remedies" element={<Remedies />} />
               <Route path="/ai/chatbot" element={<AIChatbot />} />
-              <Route path="/ai/daily-tips" element={<DailyTips />} />
               <Route path="/ai/journal" element={<HealthJournalPage />} />
               <Route path="/ai/safety" element={<SafetyCheck />} />
               <Route path="/ai/wellness-plan" element={<WellnessPlan />} />
