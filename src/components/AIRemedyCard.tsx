@@ -1,10 +1,11 @@
 import { motion } from "framer-motion";
-import { ChevronDown, Sparkles, Heart, Share2, Printer, Copy, Zap, Bookmark } from "lucide-react";
+import { ChevronDown, Sparkles, Heart, Share2, Printer, Copy, Zap, Bookmark, Loader2 } from "lucide-react";
 import { useState, forwardRef } from "react";
 import { Card } from "./ui/card";
 import { Button } from "./ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { AIRemedy } from "@/types/remedy";
+import { useSaveRemedy } from "@/hooks/useSaveRemedy";
 
 interface AIRemedyCardProps {
   remedy: AIRemedy;
@@ -17,8 +18,9 @@ export const AIRemedyCard = forwardRef<HTMLDivElement, AIRemedyCardProps>(({
 }, ref) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [isFavorite, setIsFavorite] = useState(false);
-  const [isTracked, setIsTracked] = useState(false);
+  const [isSaved, setIsSaved] = useState(false);
   const { toast } = useToast();
+  const { saveRemedy, isSaving, isAuthenticated } = useSaveRemedy();
 
   const handleCopy = () => {
     const text = `${remedy.name}\nHealth Issue: ${remedy.healthIssue}\nRemedy: ${remedy.remedy}${remedy.yogasan ? `\nYoga: ${remedy.yogasan}` : ''}${remedy.acupressure ? `\nAcupressure: ${remedy.acupressure}` : ''}`;
@@ -47,13 +49,16 @@ export const AIRemedyCard = forwardRef<HTMLDivElement, AIRemedyCardProps>(({
     printWindow?.print();
   };
 
-  const handleTrack = () => {
-    setIsTracked(true);
-    toast({
-      title: "Bookmarked",
-      description: "Remedy saved to your favorites",
+  const handleSaveToProfile = async () => {
+    const success = await saveRemedy({
+      name: remedy.name,
+      healthIssue: remedy.healthIssue,
+      remedy: remedy.remedy,
+      yogasan: remedy.yogasan,
+      acupressure: remedy.acupressure,
+      isAI: true,
     });
-    setTimeout(() => setIsTracked(false), 2000);
+    if (success) setIsSaved(true);
   };
 
   return (
@@ -112,13 +117,19 @@ export const AIRemedyCard = forwardRef<HTMLDivElement, AIRemedyCardProps>(({
               <Button
                 variant="ghost"
                 size="icon"
-                onClick={handleTrack}
+                onClick={handleSaveToProfile}
+                disabled={isSaving || isSaved}
                 className="hover:bg-primary/10"
+                title={isAuthenticated ? "Save to profile" : "Sign in to save"}
               >
-                <Bookmark
-                  size={20}
-                  className={`${isTracked ? 'fill-primary text-primary' : 'text-muted-foreground'} transition-colors`}
-                />
+                {isSaving ? (
+                  <Loader2 size={20} className="animate-spin text-primary" />
+                ) : (
+                  <Bookmark
+                    size={20}
+                    className={`${isSaved ? 'fill-primary text-primary' : 'text-muted-foreground'} transition-colors`}
+                  />
+                )}
               </Button>
             </div>
           </div>
