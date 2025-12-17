@@ -31,6 +31,9 @@ export function Navbar() {
     { path: "/ai/sleep", label: "Sleep Optimizer" },
     { path: "/ai/stress", label: "Stress Relief" },
     { path: "/ai/immunity", label: "Immunity Booster" },
+    { path: "/ai/breathing", label: "Breathing Test" },
+    { path: "/ai/home-remedies", label: "Home Remedies+" },
+    { path: "/ai/exercises", label: "Exercise Planner" },
   ];
 
   const isActive = (path: string) => location.pathname === path;

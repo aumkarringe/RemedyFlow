@@ -22,6 +22,9 @@ import StressRelief from "./pages/StressRelief";
 import ImmunityBooster from "./pages/ImmunityBooster";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
+import BreathingTest from "./pages/BreathingTest";
+import HomeRemediesExpanded from "./pages/HomeRemediesExpanded";
+import ExerciseRecommendations from "./pages/ExerciseRecommendations";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -52,6 +55,9 @@ const App = () => (
               <Route path="/ai/sleep" element={<SleepOptimizer />} />
               <Route path="/ai/stress" element={<StressRelief />} />
               <Route path="/ai/immunity" element={<ImmunityBooster />} />
+              <Route path="/ai/breathing" element={<BreathingTest />} />
+              <Route path="/ai/home-remedies" element={<HomeRemediesExpanded />} />
+              <Route path="/ai/exercises" element={<ExerciseRecommendations />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </HashRouter>
