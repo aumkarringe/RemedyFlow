@@ -7,7 +7,6 @@ import { AIRemedyCard } from "@/components/AIRemedyCard";
 import { ViewToggle } from "@/components/ViewToggle";
 import { Navbar } from "@/components/Navbar";
 import { AIAssistant } from "@/components/AIAssistant";
-import { DailyWellnessTip } from "@/components/DailyWellnessTip";
 import remediesData from "@/assets/remedies.json";
 import { Remedy, AIRemedy, isAIRemedy } from "@/types/remedy";
 import { useToast } from "@/hooks/use-toast";
@@ -171,12 +170,9 @@ export default function Remedies() {
               Discover Natural Remedies
             </span>
           </h1>
-          <p className="text-center text-muted-foreground text-lg max-w-2xl mx-auto mb-6">
+          <p className="text-center text-muted-foreground text-lg max-w-2xl mx-auto">
             Search our extensive database enhanced with AI-powered recommendations
           </p>
-          <div className="max-w-2xl mx-auto">
-            <DailyWellnessTip />
-          </div>
         </motion.div>
 
         <SearchBar

@@ -1,7 +1,6 @@
 import { Link, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Sparkles, Home, Leaf, Brain, Heart, Menu, X, LayoutDashboard, LogIn, LogOut, User } from "lucide-react";
-import { ThemeToggle } from "./ThemeToggle";
+import { Sparkles, Home, Leaf, Brain, Menu, X, LayoutDashboard, LogIn, LogOut } from "lucide-react";
 import { useState } from "react";
 import { Button } from "./ui/button";
 import { useAuth } from "@/hooks/useAuth";
@@ -19,7 +18,6 @@ export function Navbar() {
 
   const aiToolsItems = [
     { path: "/ai/chatbot", label: "AI Chatbot" },
-    { path: "/ai/daily-tips", label: "Daily Tips" },
     { path: "/ai/symptoms", label: "Symptom Analyzer" },
     { path: "/ai/journal", label: "Health Journal" },
     { path: "/ai/safety", label: "Safety Check" },
@@ -122,8 +120,6 @@ export function Navbar() {
 
           {/* Right side */}
           <div className="flex items-center gap-2">
-            <ThemeToggle />
-            
             {/* Auth buttons */}
             {user ? (
               <Button
