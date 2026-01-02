@@ -15,8 +15,8 @@ export default function Home() {
     },
     {
       icon: Brain,
-      title: "AI-Powered Tools",
-      description: "Advanced AI features including remedy comparison, health journal analysis, and wellness plans",
+      title: "Smart Wellness Tools",
+      description: "Intelligent features including remedy comparison, health journal analysis, and personalized wellness plans",
       color: "from-purple-500 to-pink-500",
     },
     {
@@ -36,7 +36,7 @@ export default function Home() {
   const stats = [
     { number: "600+", label: "Home Remedies" },
     { number: "50+", label: "Health Conditions" },
-    { number: "8", label: "AI Features" },
+    { number: "8", label: "Smart Features" },
     { number: "100%", label: "Natural" },
   ];
 
@@ -113,7 +113,6 @@ export default function Home() {
                 Natural Healing
               </span>
               <br />
-              <span className="text-foreground">Powered by AI</span>
             </motion.h1>
 
             <motion.p
@@ -141,7 +140,7 @@ export default function Home() {
               <Link to="/ai/symptoms">
                 <Button size="lg" variant="outline" className="text-lg px-8 py-6">
                   <Brain className="mr-2 w-5 h-5" />
-                  Try AI Tools
+                  Try Smart Tools
                 </Button>
               </Link>
             </motion.div>
@@ -247,7 +246,7 @@ export default function Home() {
             </span>
           </h2>
           <p className="text-lg text-muted-foreground mb-8 max-w-2xl mx-auto">
-            Join thousands discovering the power of natural remedies enhanced by AI
+            Join thousands discovering the power of natural remedies enhanced by smart technology
           </p>
           <Link to="/remedies">
             <Button size="lg" className="text-lg px-10 py-6 group shadow-[var(--shadow-glow)]">
@@ -262,7 +261,7 @@ export default function Home() {
       <footer className="py-8 border-t border-border/50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-muted-foreground">
           <p className="text-sm">
-            © 2024 RemedyFlow. Empowering natural wellness with AI technology.
+            © 2024 RemedyFlow. Empowering natural wellness with intelligent technology.
           </p>
         </div>
       </footer>

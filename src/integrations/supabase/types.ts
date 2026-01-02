@@ -107,6 +107,45 @@ export type Database = {
         }
         Relationships: []
       }
+      user_symptoms: {
+        Row: {
+          analysis: string | null
+          created_at: string
+          future_predictions: Json | null
+          id: string
+          notes: string | null
+          recommendations: Json | null
+          severity: string | null
+          symptoms: string[]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          analysis?: string | null
+          created_at?: string
+          future_predictions?: Json | null
+          id?: string
+          notes?: string | null
+          recommendations?: Json | null
+          severity?: string | null
+          symptoms: string[]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          analysis?: string | null
+          created_at?: string
+          future_predictions?: Json | null
+          id?: string
+          notes?: string | null
+          recommendations?: Json | null
+          severity?: string | null
+          symptoms?: string[]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       wellness_plans: {
         Row: {
           created_at: string | null

@@ -6,38 +6,90 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Safety guardrails - topics to avoid
+// Enhanced safety guardrails - comprehensive list of sensitive topics
 const sensitiveTopics = [
   'medical diagnosis',
-  'prescription medication dosage',
-  'emergency medical advice',
+  'prescription medication',
+  'emergency medical',
   'drug interactions',
   'suicide',
   'self-harm',
   'illegal activities',
   'personal medical records',
-  'specific drug prescriptions',
+  'drug prescriptions',
+  'overdose',
+  'abortion',
+  'euthanasia',
+  'controlled substances',
+  'mental health crisis',
+  'violence',
+  'weapons',
+  'credit card',
+  'social security',
+  'password',
+  'bank account',
+  'private key',
+  'api key',
+  'secret key',
 ];
 
-const safetySystemPrompt = `You are a helpful wellness and home remedies assistant. You provide general wellness information and natural remedy suggestions.
+// Keywords that indicate potential hallucination risks
+const hallucinationRiskPatterns = [
+  /cure\s+(cancer|aids|hiv|diabetes)/i,
+  /100%\s*(effective|guaranteed|cure)/i,
+  /miracle\s*(cure|treatment|remedy)/i,
+  /replace\s*(medication|medicine|doctor)/i,
+  /stop\s*taking\s*(medication|medicine)/i,
+];
 
-IMPORTANT SAFETY GUIDELINES - YOU MUST FOLLOW THESE:
-1. NEVER provide specific medical diagnoses
-2. NEVER recommend specific prescription medication dosages
-3. NEVER provide emergency medical advice - always direct to emergency services
-4. NEVER discuss drug interactions in detail - recommend consulting a pharmacist
-5. Always recommend consulting healthcare professionals for serious conditions
-6. Focus on general wellness, preventive care, and traditional home remedies
-7. If asked about sensitive medical topics, politely decline and suggest professional consultation
-8. Be helpful but cautious - user safety is the top priority
-9. For any symptoms that could be serious, recommend seeing a doctor
+const safetySystemPrompt = `You are a knowledgeable wellness and natural remedies consultant. You provide general wellness information and traditional remedy suggestions based on centuries of herbal medicine knowledge.
 
-If a user asks about something potentially dangerous or outside your safe scope, respond with:
-"I'm not able to provide advice on that topic as it requires professional medical expertise. Please consult with a healthcare provider for personalized guidance."`;
+CRITICAL SAFETY GUIDELINES - STRICTLY FOLLOW:
+
+1. NEVER provide specific medical diagnoses - you are not a doctor
+2. NEVER recommend stopping or replacing prescription medications
+3. NEVER provide dosages for prescription drugs
+4. For any emergency symptoms, ALWAYS direct to emergency services (911)
+5. NEVER discuss controlled substances or illegal activities
+6. Always recommend consulting healthcare professionals for serious conditions
+7. Focus on preventive care, traditional remedies, and lifestyle modifications
+8. Be honest about limitations - say "I don't know" when uncertain
+9. Avoid absolute claims like "this will cure" - use "may help with" instead
+10. For chronic conditions, always suggest professional medical consultation
+
+RESPONSE STYLE:
+- Be warm, empathetic, and supportive
+- Use clear, simple language
+- Provide evidence-based information when available
+- Include safety precautions for any remedy suggested
+- Format responses naturally, avoiding robotic patterns
+
+If asked about sensitive topics outside your scope, respond:
+"I appreciate your trust, but this topic requires professional expertise. Please consult with a qualified healthcare provider for personalized guidance."`;
 
 function containsSensitiveTopic(message: string): boolean {
   const lowerMessage = message.toLowerCase();
   return sensitiveTopics.some(topic => lowerMessage.includes(topic));
+}
+
+function hasHallucinationRisk(message: string): boolean {
+  return hallucinationRiskPatterns.some(pattern => pattern.test(message));
+}
+
+function sanitizeResponse(response: string): string {
+  // Remove any potentially harmful advice patterns
+  const harmfulPatterns = [
+    /take\s+\d+\s*(mg|ml|pills?|tablets?|capsules?)\s+of/gi,
+    /inject\s+/gi,
+    /stop\s+taking\s+your\s+(medication|medicine|prescription)/gi,
+  ];
+  
+  let sanitized = response;
+  harmfulPatterns.forEach(pattern => {
+    sanitized = sanitized.replace(pattern, '[consult a healthcare provider about] ');
+  });
+  
+  return sanitized;
 }
 
 serve(async (req) => {
@@ -46,27 +98,41 @@ serve(async (req) => {
   }
 
   try {
-    const { messages, context } = await req.json();
+    const { messages, context, saveSymptoms } = await req.json();
     const OPENROUTER_API_KEY = Deno.env.get('OPENROUTER_API_KEY');
     
     if (!OPENROUTER_API_KEY) {
       throw new Error("OPENROUTER_API_KEY is not configured");
     }
 
-    // Check for sensitive content in the latest message
-    const latestUserMessage = messages.find((m: any) => m.role === 'user')?.content || '';
+    const latestUserMessage = messages.find((m: { role: string; content: string }) => m.role === 'user')?.content || '';
     
+    // Check for sensitive content
     if (containsSensitiveTopic(latestUserMessage)) {
+      console.log('Blocked sensitive topic request');
       return new Response(JSON.stringify({
-        response: "I appreciate your trust, but this topic requires professional medical expertise. Please consult with a qualified healthcare provider who can give you personalized advice based on your specific situation. Your health and safety are important!",
-        blocked: true
+        response: "I appreciate your trust in me, but this topic requires professional expertise that I cannot provide. For your safety and wellbeing, please consult with a qualified healthcare provider, pharmacist, or appropriate professional who can give you personalized guidance based on your specific situation. Your health matters, and getting the right expert advice is important! 💚",
+        blocked: true,
+        reason: "sensitive_topic"
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // Check for hallucination risk patterns
+    if (hasHallucinationRisk(latestUserMessage)) {
+      console.log('Detected hallucination risk pattern');
+      return new Response(JSON.stringify({
+        response: "I want to be honest with you - while natural remedies can support overall wellness, I cannot make claims about curing serious medical conditions. These conditions require proper medical diagnosis and treatment from qualified healthcare providers. I'd be happy to suggest supportive wellness practices that can complement professional medical care. Would you like some general wellness suggestions instead?",
+        blocked: true,
+        reason: "hallucination_prevention"
       }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
     const systemMessage = context 
-      ? `${safetySystemPrompt}\n\nContext: ${context}`
+      ? `${safetySystemPrompt}\n\nAdditional Context: ${context}`
       : safetySystemPrompt;
 
     const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
@@ -75,7 +141,7 @@ serve(async (req) => {
         'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
         'Content-Type': 'application/json',
         'HTTP-Referer': 'https://lovable.dev',
-        'X-Title': 'Wellness Home Remedies App',
+        'X-Title': 'RemedyFlow Wellness App',
       },
       body: JSON.stringify({
         model: 'google/gemini-2.0-flash-001',
@@ -83,8 +149,9 @@ serve(async (req) => {
           { role: 'system', content: systemMessage },
           ...messages,
         ],
-        temperature: 0.7,
+        temperature: 0.6, // Lower temperature for more consistent, less hallucinatory responses
         max_tokens: 2000,
+        top_p: 0.9,
       }),
     });
 
@@ -93,27 +160,39 @@ serve(async (req) => {
       console.error('OpenRouter error:', response.status, errorText);
       
       if (response.status === 429) {
-        return new Response(JSON.stringify({ error: "Rate limit exceeded. Please try again later." }), {
+        return new Response(JSON.stringify({ 
+          error: "I'm receiving many requests right now. Please try again in a moment.",
+          blocked: false 
+        }), {
           status: 429,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       }
       
-      throw new Error(`OpenRouter API error: ${response.status}`);
+      throw new Error(`API error: ${response.status}`);
     }
 
     const data = await response.json();
-    const generatedText = data.choices?.[0]?.message?.content || '';
+    let generatedText = data.choices?.[0]?.message?.content || '';
+
+    // Sanitize the response for any harmful patterns that slipped through
+    generatedText = sanitizeResponse(generatedText);
+
+    console.log('Successfully generated response');
 
     return new Response(JSON.stringify({ 
       response: generatedText,
-      blocked: false 
+      blocked: false,
+      model: 'gemini-2.0-flash'
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (error) {
     console.error('Error in openrouter-chat function:', error);
-    return new Response(JSON.stringify({ error: error instanceof Error ? error.message : 'Unknown error' }), {
+    return new Response(JSON.stringify({ 
+      error: "I'm having trouble connecting right now. Please try again in a moment.",
+      blocked: false 
+    }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });

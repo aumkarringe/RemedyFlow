@@ -141,7 +141,7 @@ export default function Dashboard() {
                 <Sparkles className="h-8 w-8 text-primary" />
               </div>
               <div>
-                <h3 className="text-xl font-semibold">AI Wellness Insights</h3>
+                <h3 className="text-xl font-semibold">Smart Wellness Insights</h3>
                 <p className="text-muted-foreground">
                   Get personalized recommendations based on your health data
                 </p>
