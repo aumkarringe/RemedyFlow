@@ -18,19 +18,23 @@ export default function SafetyCheck() {
     setAiRemedies([]);
     
     try {
-      const { data, error } = await supabase.functions.invoke('ai-chat', {
+      const { data, error } = await supabase.functions.invoke('openrouter-chat', {
         body: {
           messages: [
-            { role: "user", content: `Check for potential contraindications and dangerous interactions between:\nRemedies: ${items.remedies.join(', ') || 'None'}\nMedications: ${items.medications.join(', ') || 'None'}\nMedical Conditions: ${items.conditions.join(', ') || 'None'}\n\nProvide a detailed safety analysis with warnings about potential interactions. Format as JSON with: name (as "Safety Analysis"), healthIssue (as "Contraindication Check"), remedy (detailed analysis of interactions), benefits (as "Safe Combinations"), precautions (critical warnings).` }
+            { role: "user", content: `Check safety of combining:\nRemedies: ${items.remedies.join(', ') || 'None'}\nMedications: ${items.medications.join(', ') || 'None'}\nConditions: ${items.conditions.join(', ') || 'None'}` }
           ],
-          systemPrompt: "You are a medical safety expert. Provide thorough contraindication analysis and safety warnings. Always respond with valid JSON."
+          context: "Provide a detailed safety analysis with warnings about potential interactions. Return as JSON with: name (as 'Safety Analysis'), healthIssue (as 'Contraindication Check'), remedy (detailed analysis), benefits (safe combinations), precautions (critical warnings). Always recommend consulting a healthcare provider."
         }
       });
 
       if (error) throw error;
 
-      const text = data.choices?.[0]?.message?.content || '';
-      const jsonMatch = text.match(/\{[\s\S]*\}/);
+      if (data.blocked) {
+        toast({ title: "Safety Notice", description: data.response, variant: "destructive" });
+        return;
+      }
+
+      const jsonMatch = data.response.match(/\{[\s\S]*\}/);
       if (jsonMatch) {
         const analysis = JSON.parse(jsonMatch[0]);
         setAiRemedies([{ ...analysis, source: "AI-Generated" }]);

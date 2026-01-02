@@ -45,19 +45,24 @@ const ImmunityBooster = () => {
 
     setIsLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke('ai-chat', {
+      const { data, error } = await supabase.functions.invoke('openrouter-chat', {
         body: {
           messages: [{
             role: "user",
-            content: `Generate 6 immunity-boosting home remedies focused on: ${selectedGoals.join(', ')}. Include dietary remedies, herbal supplements, lifestyle practices, and preventive measures. For each provide: name, description, ingredients/requirements, preparation/practice method, frequency, and expected benefits. Format as JSON array.`
-          }]
+            content: `Generate immunity-boosting remedies for: ${selectedGoals.join(', ')}`
+          }],
+          context: `Generate 6 immunity-boosting home remedies. Include dietary remedies, herbal supplements, lifestyle practices, and preventive measures. For each provide: name, description, ingredients/requirements, preparation/practice method, frequency, and expected benefits. Return as JSON array. Health goals: ${selectedGoals.join(', ')}`
         }
       });
 
       if (error) throw error;
       
-      const content = data.choices[0].message.content;
-      const jsonMatch = content.match(/\[[\s\S]*\]/);
+      if (data.blocked) {
+        toast({ title: "Safety Notice", description: data.response, variant: "destructive" });
+        return;
+      }
+      
+      const jsonMatch = data.response.match(/\[[\s\S]*\]/);
       if (jsonMatch) {
         setRemedies(JSON.parse(jsonMatch[0]));
       }
