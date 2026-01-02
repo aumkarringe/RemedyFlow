@@ -28,19 +28,24 @@ const NaturalBeauty = () => {
 
     setIsLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke('ai-chat', {
+      const { data, error } = await supabase.functions.invoke('openrouter-chat', {
         body: {
           messages: [{
             role: "user",
-            content: `Generate 5 natural beauty remedies for ${concern}. For each remedy provide: name, description (2-3 sentences), ingredients list with measurements, preparation steps, application method, and expected results. Format as JSON array.`
-          }]
+            content: `Generate 5 natural beauty remedies for ${concern}`
+          }],
+          context: `Generate 5 natural beauty remedies. For each remedy provide: name, description (2-3 sentences), ingredients list with measurements, preparation steps, application method, and expected results. Return as JSON array. Beauty concern: ${concern}`
         }
       });
 
       if (error) throw error;
       
-      const content = data.choices[0].message.content;
-      const jsonMatch = content.match(/\[[\s\S]*\]/);
+      if (data.blocked) {
+        toast({ title: "Safety Notice", description: data.response, variant: "destructive" });
+        return;
+      }
+      
+      const jsonMatch = data.response.match(/\[[\s\S]*\]/);
       if (jsonMatch) {
         setRemedies(JSON.parse(jsonMatch[0]));
       }

@@ -30,19 +30,24 @@ const StressRelief = () => {
 
     setIsLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke('ai-chat', {
+      const { data, error } = await supabase.functions.invoke('openrouter-chat', {
         body: {
           messages: [{
             role: "user",
-            content: `Generate 5 natural stress relief remedies for ${intensity} stress caused by: ${stressSource}. Include quick relief techniques, herbal remedies, breathing exercises, and lifestyle adjustments. For each provide: name, description, how to practice/prepare, duration, and expected benefits. Format as JSON array.`
-          }]
+            content: `Help me with ${intensity} stress from: ${stressSource}`
+          }],
+          context: `Generate 5 natural stress relief remedies. Include quick relief techniques, herbal remedies, breathing exercises, and lifestyle adjustments. For each provide: name, description, how to practice/prepare, duration, and expected benefits. Return as JSON array. Stress level: ${intensity}, Cause: ${stressSource}`
         }
       });
 
       if (error) throw error;
       
-      const content = data.choices[0].message.content;
-      const jsonMatch = content.match(/\[[\s\S]*\]/);
+      if (data.blocked) {
+        toast({ title: "Safety Notice", description: data.response, variant: "destructive" });
+        return;
+      }
+      
+      const jsonMatch = data.response.match(/\[[\s\S]*\]/);
       if (jsonMatch) {
         setRemedies(JSON.parse(jsonMatch[0]));
       }
