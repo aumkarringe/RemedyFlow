@@ -1,15 +1,17 @@
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { MessageCircle, X, Send, Bot, User, Loader2 } from "lucide-react";
+import { MessageCircle, X, Send, Leaf, User, Loader2 } from "lucide-react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { ScrollArea } from "./ui/scroll-area";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { WellnessResponse } from "./WellnessResponse";
 
 interface Message {
   role: "user" | "assistant";
   content: string;
+  blocked?: boolean;
 }
 
 export const AIAssistant = () => {
@@ -17,7 +19,7 @@ export const AIAssistant = () => {
   const [messages, setMessages] = useState<Message[]>([
     {
       role: "assistant",
-      content: "Hello! I'm your AI wellness assistant powered by Gemini. Ask me anything about home remedies, natural healing, yoga, or healthy living. How can I help you today?",
+      content: "Hello! I'm your wellness guide. Ask me anything about home remedies, natural healing, yoga, or healthy living. How can I help you today?",
     },
   ]);
   const [input, setInput] = useState("");
@@ -40,10 +42,10 @@ export const AIAssistant = () => {
     setIsLoading(true);
 
     try {
-      const { data, error } = await supabase.functions.invoke("ai-remedy-assistant", {
+      const { data, error } = await supabase.functions.invoke("openrouter-chat", {
         body: {
-          message: userMessage,
-          conversationHistory: messages,
+          messages: [{ role: "user", content: userMessage }],
+          context: "General wellness and home remedies chat assistant",
         },
       });
 
@@ -51,13 +53,17 @@ export const AIAssistant = () => {
 
       setMessages((prev) => [
         ...prev,
-        { role: "assistant", content: data.response },
+        { 
+          role: "assistant", 
+          content: data.response || data.error,
+          blocked: data.blocked 
+        },
       ]);
     } catch (error) {
       console.error("Error:", error);
       toast({
-        title: "Error",
-        description: "Failed to get response. Please try again.",
+        title: "Connection Issue",
+        description: "Please try again in a moment.",
         variant: "destructive",
       });
     } finally {
@@ -100,11 +106,11 @@ export const AIAssistant = () => {
             <div className="flex items-center justify-between p-4 border-b border-border bg-gradient-to-r from-primary/10 to-secondary/10">
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-gradient-to-br from-primary to-secondary rounded-full">
-                  <Bot className="w-5 h-5 text-primary-foreground" />
+                  <Leaf className="w-5 h-5 text-primary-foreground" />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-foreground">AI Wellness Assistant</h3>
-                  <p className="text-xs text-muted-foreground">Powered by Gemini</p>
+                  <h3 className="font-semibold text-foreground">Wellness Guide</h3>
+                  <p className="text-xs text-muted-foreground">Natural remedies expert</p>
                 </div>
               </div>
               <Button
@@ -129,30 +135,31 @@ export const AIAssistant = () => {
                       msg.role === "user" ? "flex-row-reverse" : "flex-row"
                     }`}
                   >
-                    <div
-                      className={`p-2 rounded-full ${
-                        msg.role === "user"
-                          ? "bg-primary"
-                          : "bg-gradient-to-br from-primary/20 to-secondary/20"
-                      } flex-shrink-0`}
-                    >
-                      {msg.role === "user" ? (
-                        <User className="w-4 h-4 text-primary-foreground" />
-                      ) : (
-                        <Bot className="w-4 h-4 text-primary" />
-                      )}
-                    </div>
-                    <div
-                      className={`rounded-2xl p-3 max-w-[75%] ${
-                        msg.role === "user"
-                          ? "bg-primary text-primary-foreground"
-                          : "bg-muted text-foreground"
-                      }`}
-                    >
-                      <p className="text-sm leading-relaxed whitespace-pre-wrap">
-                        {msg.content}
-                      </p>
-                    </div>
+                    {msg.role === "user" ? (
+                      <>
+                        <div className="p-2 rounded-full bg-primary flex-shrink-0">
+                          <User className="w-4 h-4 text-primary-foreground" />
+                        </div>
+                        <div className="rounded-2xl p-3 max-w-[75%] bg-primary text-primary-foreground">
+                          <p className="text-sm leading-relaxed whitespace-pre-wrap">
+                            {msg.content}
+                          </p>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <div className="p-2 rounded-full bg-gradient-to-br from-primary/20 to-secondary/20 flex-shrink-0">
+                          <Leaf className="w-4 h-4 text-primary" />
+                        </div>
+                        <div className="max-w-[85%]">
+                          <WellnessResponse 
+                            content={msg.content} 
+                            isBlocked={msg.blocked}
+                            className="text-sm"
+                          />
+                        </div>
+                      </>
+                    )}
                   </motion.div>
                 ))}
                 {isLoading && (
@@ -162,10 +169,11 @@ export const AIAssistant = () => {
                     className="flex gap-3"
                   >
                     <div className="p-2 rounded-full bg-gradient-to-br from-primary/20 to-secondary/20 flex-shrink-0">
-                      <Bot className="w-4 h-4 text-primary" />
+                      <Leaf className="w-4 h-4 text-primary" />
                     </div>
-                    <div className="rounded-2xl p-3 bg-muted">
+                    <div className="rounded-2xl p-3 bg-muted flex items-center gap-2">
                       <Loader2 className="w-4 h-4 animate-spin text-primary" />
+                      <span className="text-sm text-muted-foreground">Thinking...</span>
                     </div>
                   </motion.div>
                 )}

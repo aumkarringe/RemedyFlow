@@ -1,7 +1,7 @@
 import { Navbar } from "@/components/Navbar";
 import { AIAssistant } from "@/components/AIAssistant";
 import { motion } from "framer-motion";
-import { Bot } from "lucide-react";
+import { Leaf } from "lucide-react";
 
 const AIChatbot = () => {
   return (
@@ -14,12 +14,12 @@ const AIChatbot = () => {
           transition={{ duration: 0.5 }}
           className="text-center mb-8"
         >
-          <Bot className="w-16 h-16 mx-auto mb-4 text-primary animate-pulse" />
+          <Leaf className="w-16 h-16 mx-auto mb-4 text-primary animate-pulse" />
           <h1 className="text-4xl font-bold mb-4 bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-            AI Remedy Assistant
+            Wellness Guide
           </h1>
           <p className="text-muted-foreground max-w-2xl mx-auto">
-            Chat with our AI assistant powered by Gemini to get personalized remedy recommendations and health advice
+            Chat with our intelligent wellness guide to get personalized remedy recommendations and health advice
           </p>
         </motion.div>
         <AIAssistant />
