@@ -1,14 +1,41 @@
 import { Link, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Sparkles, Home, Leaf, Brain, Menu, X, LayoutDashboard, LogIn, LogOut } from "lucide-react";
-import { useState } from "react";
+import { Sparkles, Home, Leaf, Brain, Menu, X, LayoutDashboard, LogIn, LogOut, User } from "lucide-react";
+import { useState, useEffect } from "react";
 import { Button } from "./ui/button";
 import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
 
 export function Navbar() {
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { user, signOut } = useAuth();
+  const [displayName, setDisplayName] = useState<string>("");
+
+  useEffect(() => {
+    if (user) {
+      // First check user metadata, then fetch from profiles
+      const metaName = user.user_metadata?.display_name;
+      if (metaName) {
+        setDisplayName(metaName);
+      } else {
+        fetchProfile();
+      }
+    }
+  }, [user]);
+
+  const fetchProfile = async () => {
+    if (!user) return;
+    const { data } = await supabase
+      .from("profiles")
+      .select("display_name")
+      .eq("id", user.id)
+      .single();
+    
+    if (data?.display_name) {
+      setDisplayName(data.display_name);
+    }
+  };
 
   const navItems = [
     { path: "/", label: "Home", icon: Home },
@@ -120,17 +147,25 @@ export function Navbar() {
 
           {/* Right side */}
           <div className="flex items-center gap-2">
-            {/* Auth buttons */}
+            {/* User info and auth buttons */}
             {user ? (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => signOut()}
-                className="hidden md:flex items-center gap-2"
-              >
-                <LogOut className="w-4 h-4" />
-                Sign Out
-              </Button>
+              <div className="hidden md:flex items-center gap-3">
+                <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-primary/10 border border-primary/20">
+                  <User className="w-4 h-4 text-primary" />
+                  <span className="text-sm font-medium text-foreground">
+                    {displayName || user.email?.split('@')[0] || "User"}
+                  </span>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => signOut()}
+                  className="flex items-center gap-2"
+                >
+                  <LogOut className="w-4 h-4" />
+                  Sign Out
+                </Button>
+              </div>
             ) : (
               <Link to="/auth" className="hidden md:block">
                 <Button size="sm" className="flex items-center gap-2">
@@ -164,6 +199,19 @@ export function Navbar() {
             exit={{ opacity: 0, height: 0 }}
             className="md:hidden py-4 space-y-2"
           >
+            {/* Mobile User Info */}
+            {user && (
+              <div className="flex items-center gap-3 px-4 py-3 mb-2 rounded-lg bg-primary/10 border border-primary/20">
+                <User className="w-5 h-5 text-primary" />
+                <div>
+                  <p className="font-medium text-foreground">
+                    {displayName || user.email?.split('@')[0] || "User"}
+                  </p>
+                  <p className="text-xs text-muted-foreground">{user.email}</p>
+                </div>
+              </div>
+            )}
+            
             {navItems.map((item) => {
               const Icon = item.icon;
               const active = isActive(item.path);

@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { Navbar } from "@/components/Navbar";
+import { SymptomTracker } from "@/components/SymptomTracker";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -13,7 +14,7 @@ import { useToast } from "@/hooks/use-toast";
 import { 
   Loader2, Sparkles, Heart, Brain, Moon, Zap, Shield, 
   Salad, Dumbbell, Wind, Calendar, Star, BookOpen,
-  TrendingUp, RefreshCw
+  TrendingUp, RefreshCw, Activity
 } from "lucide-react";
 
 interface WellnessInsights {
@@ -162,6 +163,21 @@ export default function Dashboard() {
             </Button>
           </CardContent>
         </Card>
+
+        {/* Symptom Tracker Section */}
+        <div className="mb-8">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+          >
+            <div className="flex items-center gap-2 mb-4">
+              <Activity className="h-6 w-6 text-primary" />
+              <h2 className="text-2xl font-bold text-foreground">Symptom Tracker & Wellness Insights</h2>
+            </div>
+            <SymptomTracker />
+          </motion.div>
+        </div>
 
         {insights && (
           <Tabs defaultValue="stats" className="space-y-6">
